@@ -50,9 +50,7 @@ async def start():
             sys.modules["plugins." + plugin_name] = load
             print("Imported => " + plugin_name)
 
-#Dont Remove My Credit @AV_BOTz_UPDATE 
-#This Repo Is By @BOT_OWNER26 
-# For Any Kind Of Error Ask Us In Support Group @AV_SUPPORT_GROUP
+
     
     if ON_HEROKU:
         asyncio.create_task(ping_server())
@@ -75,9 +73,7 @@ async def start():
     await web.TCPSite(app, bind_address, PORT).start()
     await idle()
 
-#Dont Remove My Credit @AV_BOTz_UPDATE 
-#This Repo Is By @BOT_OWNER26 
-# For Any Kind Of Error Ask Us In Support Group @AV_SUPPORT_GROUP
+
 
 if __name__ == '__main__':
     try:
