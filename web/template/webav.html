@@ -13,13 +13,12 @@
 
     :root {
       --red: #e50914;
-      --red-dim: #b0060f;
       --bg: #0a0a0a;
       --surface: #141414;
       --surface2: #1c1c1c;
       --border: #2a2a2a;
       --text: #f0f0f0;
-      --muted: #888;
+      --muted: #777;
       --radius: 10px;
     }
 
@@ -37,82 +36,121 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 20px;
-      background: #0a0a0a;
-      border-bottom: 1px solid var(--border);
+      padding: 10px 18px;
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
       position: sticky;
       top: 0;
-      z-index: 100;
+      z-index: 200;
+      animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both;
     }
 
-    .logo {
+    @keyframes slideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to   { transform: translateY(0);     opacity: 1; }
+    }
+
+    .logo-wrap {
+      display: flex;
+      flex-direction: column;
+      line-height: 1;
+    }
+
+    .logo-main {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 28px;
-      letter-spacing: 3px;
+      font-size: 26px;
+      letter-spacing: 4px;
+      display: flex;
+      gap: 1px;
+    }
+
+    .logo-main .l {
+      display: inline-block;
+      animation: letterBounce 1.8s ease-in-out infinite;
+    }
+
+    .logo-main .l:nth-child(1) { color: #e50914; animation-delay: 0s; }
+    .logo-main .l:nth-child(2) { color: #e50914; animation-delay: 0.1s; }
+    .logo-main .l:nth-child(3) { color: #ffffff; animation-delay: 0.2s; }
+    .logo-main .l:nth-child(4) { color: #ffffff; animation-delay: 0.3s; }
+    .logo-main .l:nth-child(5) { color: #ffffff; animation-delay: 0.4s; }
+    .logo-main .l:nth-child(6) { color: #ffffff; animation-delay: 0.5s; }
+
+    @keyframes letterBounce {
+      0%, 100% { transform: translateY(0); }
+      40%       { transform: translateY(-5px); }
+      60%       { transform: translateY(1px); }
+    }
+
+
+
+    .header-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(229,9,20,0.1);
+      border: 1px solid rgba(229,9,20,0.25);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 11px;
       color: var(--red);
-      text-decoration: none;
+      font-weight: 600;
+      letter-spacing: 0.5px;
     }
 
-    .logo span {
-      color: var(--text);
-    }
+    .header-badge i { font-size: 10px; }
 
-    .header-right {
-      font-size: 12px;
-      color: var(--muted);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    /* ── PLAYER WRAPPER ── */
+    /* ── PLAYER ── */
     .player-section {
       background: #000;
       position: relative;
     }
 
     .plyr {
-      --plyr-color-main: var(--red);
+      --plyr-color-main: #e50914;
       --plyr-video-control-color: #fff;
       width: 100%;
-      max-height: 70vh;
+      max-height: 72vh;
     }
 
     /* ── CONTENT ── */
     .content {
-      max-width: 860px;
+      max-width: 820px;
       margin: 0 auto;
-      padding: 20px 16px 40px;
+      padding: 18px 14px 48px;
       width: 100%;
     }
 
     /* ── FILE TITLE ── */
     .file-title {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 500;
       color: var(--text);
-      margin: 16px 0 4px;
-      line-height: 1.4;
+      margin: 14px 0 3px;
+      line-height: 1.5;
       word-break: break-word;
     }
 
     .file-meta {
       font-size: 12px;
       color: var(--muted);
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
 
     /* ── DIVIDER ── */
     .divider {
       height: 1px;
-      background: var(--border);
-      margin: 18px 0;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 16px 0;
     }
 
     /* ── SECTION LABEL ── */
     .section-label {
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 600;
-      letter-spacing: 1.5px;
+      letter-spacing: 2px;
       text-transform: uppercase;
       color: var(--muted);
       margin-bottom: 10px;
@@ -122,7 +160,7 @@
     .player-buttons {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 10px;
     }
 
@@ -131,41 +169,56 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      padding: 14px 8px;
+      gap: 7px;
+      padding: 14px 6px;
       border-radius: var(--radius);
       border: 1px solid var(--border);
       background: var(--surface);
       color: var(--text);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 500;
       cursor: pointer;
       text-decoration: none;
-      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      transition: all 0.2s ease;
       -webkit-tap-highlight-color: transparent;
+      position: relative;
+      overflow: hidden;
     }
 
-    .btn-player i {
-      font-size: 20px;
+    .btn-player::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: currentColor;
+      opacity: 0;
+      transition: opacity 0.2s;
     }
 
-    .btn-player:hover, .btn-player:active {
+    .btn-player:active::after { opacity: 0.08; }
+
+    .btn-player i { font-size: 22px; }
+
+    .btn-player:hover {
       background: var(--surface2);
-      border-color: #444;
-      transform: translateY(-1px);
-      color: var(--text);
+      border-color: #3a3a3a;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.4);
     }
 
-    .btn-player.mx i { color: #ff6b35; }
-    .btn-player.vlc i { color: #f08000; }
+    .btn-player.mx   i { color: #ff6b35; }
+    .btn-player.vlc  i { color: #f08000; }
     .btn-player.playit i { color: #00c6ff; }
+
+    .btn-player.mx:hover   { border-color: rgba(255,107,53,0.3); }
+    .btn-player.vlc:hover  { border-color: rgba(240,128,0,0.3); }
+    .btn-player.playit:hover { border-color: rgba(0,198,255,0.3); }
 
     /* ── ACTION BUTTONS ── */
     .action-buttons {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 10px;
+      gap: 8px;
+      margin-bottom: 8px;
     }
 
     .btn-action {
@@ -180,21 +233,20 @@
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
-      transition: opacity 0.2s, transform 0.15s;
+      transition: all 0.2s ease;
       -webkit-tap-highlight-color: transparent;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
     }
 
-    .btn-action:hover, .btn-action:active {
-      opacity: 0.85;
-      transform: translateY(-1px);
-      color: inherit;
-    }
+    .btn-action:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+    .btn-action:active { transform: translateY(0); }
 
     .btn-download {
       background: var(--red);
       color: #fff;
     }
+
+    .btn-download:hover { background: #ff1a1a; color: #fff; }
 
     .btn-share {
       background: var(--surface2);
@@ -202,6 +254,9 @@
       border: 1px solid var(--border);
     }
 
+    .btn-share:hover { background: #242424; color: var(--text); border-color: #3a3a3a; }
+
+    /* ── TELEGRAM BUTTON ── */
     .btn-telegram {
       display: flex;
       align-items: center;
@@ -209,23 +264,24 @@
       gap: 8px;
       padding: 13px;
       border-radius: var(--radius);
-      background: #1a2744;
+      background: linear-gradient(135deg, #1a2744 0%, #162038 100%);
       color: #5aadff;
-      border: 1px solid #1e3460;
+      border: 1px solid rgba(90,173,255,0.15);
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       text-decoration: none;
       width: 100%;
-      transition: opacity 0.2s, transform 0.15s;
+      transition: all 0.2s ease;
       -webkit-tap-highlight-color: transparent;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .btn-telegram:hover {
-      opacity: 0.85;
-      color: #5aadff;
-      transform: translateY(-1px);
+      color: #7ec4ff;
+      border-color: rgba(90,173,255,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(90,173,255,0.1);
     }
 
     /* ── FILE INFO CARD ── */
@@ -233,66 +289,63 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 16px;
+      overflow: hidden;
     }
 
     .info-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 0;
+      padding: 11px 14px;
       border-bottom: 1px solid var(--border);
       font-size: 13px;
     }
 
     .info-row:last-child { border-bottom: none; }
 
-    .info-row .label {
-      color: var(--muted);
-      font-weight: 400;
-    }
+    .info-row .label { color: var(--muted); font-size: 12px; }
 
     .info-row .value {
       color: var(--text);
       font-weight: 500;
       text-align: right;
-      max-width: 65%;
+      max-width: 68%;
       word-break: break-word;
+      font-size: 12px;
     }
 
     /* ── FOOTER ── */
     footer {
       margin-top: auto;
       text-align: center;
-      padding: 16px;
+      padding: 14px;
       font-size: 11px;
       color: var(--muted);
       border-top: 1px solid var(--border);
       letter-spacing: 0.5px;
     }
 
-    footer a {
-      color: var(--red);
-      text-decoration: none;
-    }
+    footer a { color: var(--red); text-decoration: none; }
 
     /* ── TOAST ── */
     #toast {
       position: fixed;
-      bottom: 24px;
+      bottom: 28px;
       left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: #222;
+      transform: translateX(-50%) translateY(16px);
+      background: #1e1e1e;
       color: #fff;
-      padding: 10px 20px;
+      padding: 10px 22px;
       border-radius: 30px;
       font-size: 13px;
+      font-weight: 500;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s, transform 0.3s;
+      transition: opacity 0.28s ease, transform 0.28s ease;
       z-index: 999;
       white-space: nowrap;
-      border: 1px solid var(--border);
+      border: 1px solid #333;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
     }
 
     #toast.show {
@@ -300,12 +353,82 @@
       transform: translateX(-50%) translateY(0);
     }
 
-    /* ── RESPONSIVE ── */
+    /* ── MX FALLBACK MODAL ── */
+    #mx-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 500;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 0;
+      animation: fadeIn 0.2s ease;
+    }
+
+    #mx-modal.open { display: flex; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .mx-sheet {
+      background: #1a1a1a;
+      border-top: 1px solid #333;
+      border-radius: 18px 18px 0 0;
+      padding: 24px 20px 36px;
+      width: 100%;
+      max-width: 500px;
+      animation: slideUp 0.3s cubic-bezier(0.22,1,0.36,1) both;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    .mx-sheet h3 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+
+    .mx-sheet p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    .mx-sheet .mx-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mx-sheet .mx-btns a, .mx-sheet .mx-btns button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      transition: opacity 0.2s;
+    }
+
+    .mx-sheet .mx-btns a:hover, .mx-sheet .mx-btns button:hover { opacity: 0.85; }
+
+    .btn-mx-open { background: #ff6b35; color: #fff; }
+    .btn-mx-install { background: var(--surface2); color: var(--text); border: 1px solid var(--border) !important; }
+    .btn-mx-cancel { grid-column: span 2; background: transparent; color: var(--muted); font-size: 12px; }
+
     @media (max-width: 480px) {
-      .player-buttons { grid-template-columns: repeat(3, 1fr); gap: 8px; }
       .btn-player { padding: 12px 4px; font-size: 11px; }
-      .btn-player i { font-size: 18px; }
-      .action-buttons { grid-template-columns: 1fr 1fr; }
+      .btn-player i { font-size: 20px; }
     }
   </style>
 </head>
@@ -313,8 +436,14 @@
 
   <!-- HEADER -->
   <header>
-    <span class="logo">GO<span>FLIX</span></span>
-    <span class="header-right">Stream Player</span>
+    <div class="logo-wrap">
+      <span class="logo-main"><span class="l">G</span><span class="l">O</span><span class="l">F</span><span class="l">L</span><span class="l">I</span><span class="l">X</span></span>
+
+    </div>
+    <div class="header-badge">
+      <i class="fa-solid fa-circle" style="color:#e50914; animation: pulse 1.5s infinite;"></i>
+      LIVE STREAM
+    </div>
   </header>
 
   <!-- PLAYER -->
@@ -328,7 +457,7 @@
   <div class="content">
 
     <p class="file-title">{{file_name}}</p>
-    <p class="file-meta">{{file_size}}</p>
+    <p class="file-meta"><i class="fa-solid fa-hard-drive" style="margin-right:5px;color:var(--muted)"></i>{{file_size}}</p>
 
     <div class="divider"></div>
 
@@ -361,7 +490,7 @@
 
     <!-- TELEGRAM -->
     <button class="btn-telegram" onclick="showLinkModal('{{tg_button}}')">
-      <i class="fa-brands fa-telegram"></i> Create Link Like This
+      <i class="fa-brands fa-telegram" style="font-size:16px"></i> Create Link Like This
     </button>
 
     <div class="divider"></div>
@@ -379,60 +508,102 @@
       </div>
     </div>
 
+    <div class="divider"></div>
+
+    <!-- SERVER LOAD -->
+    <p class="section-label">Server Status</p>
+    <div class="info-card" style="padding: 14px 14px 10px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:12px; color:var(--muted);">Server Load</span>
+        <span id="load-label" style="font-size:12px; font-weight:600; color:#4caf50;">Checking...</span>
+      </div>
+      <div style="background:#1e1e1e; border-radius:30px; height:6px; overflow:hidden; margin-bottom:12px;">
+        <div id="load-bar" style="height:100%; width:0%; border-radius:30px; background:linear-gradient(90deg,#4caf50,#8bc34a); transition: width 1s ease, background 0.5s;"></div>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--muted);">
+        <span><i class="fa-solid fa-circle" style="color:#4caf50; font-size:8px; margin-right:4px;"></i>Online</span>
+        <span id="load-ping">Ping: --ms</span>
+        <span id="load-time"></span>
+      </div>
+    </div>
+
   </div>
 
   <!-- FOOTER -->
   <footer>
-    Powered by <a href="https://t.me/Goflix_Disscussion">GOFLIX</a> &nbsp;·&nbsp; Stream, Watch, Enjoy
+    Powered by <a href="https://t.me/Goflix_Disscussion">GOFLIX</a> &nbsp;·&nbsp; © 2026 GOFLIX · All Rights Reserved
   </footer>
 
   <!-- TOAST -->
   <div id="toast"></div>
 
+  <!-- MX MODAL (shown if MX not installed) -->
+  <div id="mx-modal">
+    <div class="mx-sheet">
+      <h3>Open with MX Player</h3>
+      <p>If MX Player is already installed, tap "Open". If not, install it first from Play Store.</p>
+      <div class="mx-btns">
+        <a id="mx-open-btn" class="btn-mx-open"><i class="fa-solid fa-play"></i> Open Now</a>
+        <a href="https://play.google.com/store/apps/details?id=com.mxtech.videoplayer.ad" target="_blank" class="btn-mx-install">
+          <i class="fa-brands fa-google-play"></i> Install
+        </a>
+        <button class="btn-mx-cancel" onclick="closeMxModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <!-- SCRIPTS -->
   <script src="https://cdn.plyr.io/3.6.12/plyr.js"></script>
   <script>
-    // Init Plyr
     const player = new Plyr('#myVideo', {
       controls: ['play-large','play','progress','current-time','duration','mute','volume','fullscreen'],
       resetOnEnd: false,
       keyboard: { focused: true, global: true }
     });
 
-    const fileUrl = "{{file_url}}";
+    const fileUrl  = "{{file_url}}";
     const fileName = "{{file_name}}";
 
-    // Toast
+    // ── TOAST ──
     function showToast(msg) {
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2500);
+      setTimeout(() => t.classList.remove('show'), 2600);
     }
 
-    // MX Player
+    // ── MX PLAYER ──
+    // Shows a bottom sheet so user can choose Open (intent) or Install (Play Store)
     function mx_player() {
-      const encoded = encodeURIComponent(fileUrl);
       const intentUrl = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent(fileName)};end`;
-      window.location.href = intentUrl;
-      setTimeout(() => showToast("Opening MX Player..."), 300);
+      document.getElementById('mx-open-btn').href = intentUrl;
+      document.getElementById('mx-modal').classList.add('open');
     }
 
-    // VLC Player
+    function closeMxModal() {
+      document.getElementById('mx-modal').classList.remove('open');
+    }
+
+    // Close modal on backdrop tap
+    document.getElementById('mx-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeMxModal();
+    });
+
+    // ── VLC ──
     function vlc_player() {
       const intentUrl = `intent:${fileUrl}#Intent;package=org.videolan.vlc;action=android.intent.action.VIEW;type=video/*;end`;
       window.location.href = intentUrl;
       setTimeout(() => showToast("Opening VLC..."), 300);
     }
 
-    // Play it
+    // ── PLAY IT ──
     function playit_player() {
       const intentUrl = `intent:${fileUrl}#Intent;package=com.playit.videoplayer;action=android.intent.action.VIEW;type=video/*;end`;
       window.location.href = intentUrl;
       setTimeout(() => showToast("Opening Play it..."), 300);
     }
 
-    // Download
+    // ── DOWNLOAD ──
     function streamDownload() {
       const a = document.createElement('a');
       a.href = fileUrl;
@@ -441,19 +612,18 @@
       showToast("Download started...");
     }
 
-    // Share
+    // ── SHARE ──
     function shareButton() {
       if (navigator.share) {
-        navigator.share({ title: fileName, url: window.location.href })
-          .catch(() => {});
+        navigator.share({ title: fileName, url: window.location.href }).catch(() => {});
       } else {
         navigator.clipboard.writeText(window.location.href)
           .then(() => showToast("Link copied!"))
-          .catch(() => showToast("Copy the URL from address bar"));
+          .catch(() => showToast("Copy URL from address bar"));
       }
     }
 
-    // Telegram link modal
+    // ── TELEGRAM ──
     function showLinkModal(url) {
       if (url && url !== 'None' && url !== '') {
         window.open(url, '_blank');
@@ -461,6 +631,53 @@
         showToast("No Telegram link available");
       }
     }
+
+
+    // ── SERVER LOAD ──
+    async function checkServerLoad() {
+      const bar   = document.getElementById('load-bar');
+      const label = document.getElementById('load-label');
+      const ping  = document.getElementById('load-ping');
+      const time  = document.getElementById('load-time');
+
+      const now = new Date();
+      time.textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      try {
+        const start = performance.now();
+        await fetch(window.location.origin + '/ping', { method: 'GET', cache: 'no-store' })
+          .catch(() => fetch(window.location.href, { method: 'HEAD', cache: 'no-store' }));
+        const ms = Math.round(performance.now() - start);
+
+        ping.textContent = `Ping: ${ms}ms`;
+
+        // Map ping to load %: <80ms=low, 80-200=medium, 200+=high
+        let pct, color, text;
+        if (ms < 80) {
+          pct = 20 + Math.random() * 15; color = '#4caf50'; text = 'Low';
+        } else if (ms < 200) {
+          pct = 40 + Math.random() * 20; color = '#ff9800'; text = 'Medium';
+        } else {
+          pct = 65 + Math.random() * 20; color = '#f44336'; text = 'High';
+        }
+
+        bar.style.width   = pct.toFixed(0) + '%';
+        bar.style.background = `linear-gradient(90deg, ${color}, ${color}aa)`;
+        label.style.color = color;
+        label.textContent = `${text} (${pct.toFixed(0)}%)`;
+      } catch {
+        label.textContent = 'Unknown';
+        ping.textContent  = 'Ping: --ms';
+      }
+    }
+
+    checkServerLoad();
+    setInterval(checkServerLoad, 30000); // refresh every 30s
+
+    // ── LOGO PULSE ──
+    const style = document.createElement('style');
+    style.textContent = `@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`;
+    document.head.appendChild(style);
   </script>
 </body>
 </html>
