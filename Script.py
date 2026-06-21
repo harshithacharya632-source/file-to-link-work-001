@@ -61,10 +61,10 @@ Cʜᴀɴɴᴇʟ Uꜱᴀɢᴇ:
 🔞 ᴀᴅᴜʟᴛ ᴄᴏɴᴛᴇɴᴛ sᴛʀɪᴄᴛʟʏ ᴘʀᴏʜɪʙɪᴛᴇᴅ.
 
 📮 Hᴇʟᴘ & Sᴜᴘᴘᴏʀᴛ:
-• Uᴘᴅᴀᴛᴇꜱ: @AV_BOTz_UPDATE
-• Sᴜᴘᴘᴏʀᴛ: @AV_SUPPORT_GROUP
+• Uᴘᴅᴀᴛᴇꜱ: @Goflix_AdminBot
+• Sᴜᴘᴘᴏʀᴛ: @Goflix_AdminBot
 
- <u><i>ʀᴇᴘᴏʀᴛ ʙᴜɢs ᴛᴏ  <a href='https://t.me/AV_OWNER_BOT'>ᴅᴇᴠᴇʟᴏᴘᴇʀ</a></u></i></b>"""
+ <u><i>ʀᴇᴘᴏʀᴛ ʙᴜɢs ᴛᴏ  <a href='https://t.me/Goflix_AdminBot'>ᴅᴇᴠᴇʟᴏᴘᴇʀ</a></u></i></b>"""
 
     CAPTION = """🎬 <i><a href='{}'>{}</a></i>"""
     
@@ -76,8 +76,8 @@ Nᴀᴍᴇ - {}</b>"""
     ABOUT_TXT = """<b>╔══❰ {} ❱═════❍
 ║╭━━━━━━━━━━━━━━━━━━➣
 ║┣⪼🤖ᴍʏ ɴᴀᴍᴇ : {}
-║┣⪼👦ᴅᴇᴠᴇʟᴏᴘᴇʀ : <a href='https://t.me/AV_OWNER_BOT'>ᴀᴠ ᴄʜᴀᴛ ᴏᴡɴᴇʀ</a>
-║┣⪼❣️ᴜᴘᴅᴀᴛᴇ : <a href=https://t.me/AV_BOTz_UPDATE>ᴀᴠ ʙᴏᴛᴢ</a>
+║┣⪼👦ᴅᴇᴠᴇʟᴏᴘᴇʀ : <a href='https://t.me/Goflix_AdminBot'>ɢᴏꜰʟɪx ᴄʜᴀᴛ ᴏᴡɴᴇʀ</a>
+║┣⪼❣️ᴜᴘᴅᴀᴛᴇ : <a href=https://t.me/trendi_Backup>ɢᴏꜰʟɪx</a>
 ║┣⪼⏲️ʙᴏᴛ ᴜᴘᴛɪᴍᴇ :- {}
 ║┣⪼📡Hᴏsᴛᴇᴅ ᴏɴ : ᴋᴏʏᴇʙ 
 ║┣⪼🗣️ʟᴀɴɢᴜᴀɢᴇ : ᴘʏᴛʜᴏɴ 
@@ -135,7 +135,7 @@ Nᴀᴍᴇ - {}</b>"""
  
 ⛽️ ᴄʜᴇᴄᴋ ʏᴏᴜʀ ᴀᴄᴛɪᴠᴇ ᴘʟᴀɴ: /myplan
 
-🏷️ <a href='https://t.me/AV_PREMIUM_PROOF'>ᴘʀᴇᴍɪᴜᴍ ᴘʀᴏᴏꜰ</a>
+🏷️ <a href='ɢᴏꜰʟɪx'>ᴘʀᴇᴍɪᴜᴍ ᴘʀᴏᴏꜰ</a>
 
 ‼️ ᴍᴜsᴛ sᴇɴᴅ sᴄʀᴇᴇɴsʜᴏᴛ ᴀғᴛᴇʀ ᴘᴀʏᴍᴇɴᴛ.
 ‼️ ɢɪᴠᴇ ᴜꜱ ꜱᴏᴍᴇᴛɪᴍᴇ ᴛᴏ ᴀᴅᴅ ʏᴏᴜ ɪɴ ᴘʀᴇᴍɪᴜᴍ ʟɪꜱᴛ.
