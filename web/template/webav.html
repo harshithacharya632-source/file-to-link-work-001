@@ -550,7 +550,7 @@
     </div>
 
     <!-- MOVIE SEARCH GROUP -->
-    <a href="https://t.me/goflixmovie" target="_blank" class="btn-movie">
+    <a href="https://t.me/gofixmovie" target="_blank" class="btn-movie">
       <i class="fa-solid fa-film" style="font-size:15px"></i> 🎬 Movie Search Group
     </a>
 
@@ -645,9 +645,16 @@
 
     // ── MX PLAYER ──
     function mx_player() {
-      const intentUrl = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent(fileName)};end`;
-      document.getElementById('mx-open-btn').href = intentUrl;
-      document.getElementById('mx-modal').classList.add('open');
+      const intentUrl = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent(fileName)};S.subs_name=${encodeURIComponent(fileName)};end`;
+      // Try to open MX Player via intent; if not installed show modal
+      const start = Date.now();
+      window.location.href = intentUrl;
+      setTimeout(() => {
+        // If still on page after 1.5s, MX is likely not installed — show modal
+        if (Date.now() - start < 2000) {
+          document.getElementById('mx-modal').classList.add('open');
+        }
+      }, 1500);
     }
 
     function closeMxModal() {
@@ -728,6 +735,23 @@
 
     checkServerLoad();
     setInterval(checkServerLoad, 30000);
+
+    // ── FULLSCREEN AUTO-ROTATE ──
+    player.on('enterfullscreen', async () => {
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock('landscape');
+        }
+      } catch(e) {}
+    });
+
+    player.on('exitfullscreen', async () => {
+      try {
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+      } catch(e) {}
+    });
 
     // pulse keyframe
     const s = document.createElement('style');
