@@ -4,12 +4,13 @@
   <meta charset="UTF-8" />
   <title>GOFLIX | {{file_name}}</title>
   <link rel="icon" href="https://cdn.jsdelivr.net/gh/Botsthe/DATABASE@main/image/logo.png" type="image/x-icon">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
   <style>
 
+    html { max-width: 100vw; overflow-x: hidden; }
 
     :root {
       --red: #e50914;
@@ -36,6 +37,8 @@
       color: var(--text);
       font-family: 'Inter', sans-serif;
       min-height: 100vh;
+      max-width: 100vw;
+      overflow-x: hidden;
       display: flex;
       flex-direction: column;
       transition: background 0.3s, color 0.3s;
@@ -61,6 +64,8 @@
       position: sticky;
       top: 0;
       z-index: 200;
+      width: 100%;
+      max-width: 100vw;
       animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both;
     }
 
@@ -145,8 +150,30 @@
 
     .header-right { display: flex; align-items: center; gap: 8px; }
 
+    /* ── NATIVE FULLSCREEN FIX ── */
+    video:-webkit-full-screen {
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: contain;
+      background: #000;
+    }
+    video:fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+      object-fit: contain;
+      background: #000;
+    }
+    .plyr:-webkit-full-screen {
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+    .plyr:fullscreen {
+      width: 100vw !important;
+      height: 100vh !important;
+    }
+
     /* ── PLAYER ── */
-    .player-section { background: #000; position: relative; }
+    .player-section { background: #000; position: relative; width: 100%; overflow: hidden; }
 
     .plyr {
       --plyr-color-main: #e50914;
@@ -161,6 +188,7 @@
       margin: 0 auto;
       padding: 18px 14px 48px;
       width: 100%;
+      overflow-x: hidden;
     }
 
     .file-title {
@@ -169,7 +197,9 @@
       color: var(--text);
       margin: 14px 0 3px;
       line-height: 1.5;
-      word-break: break-word;
+      word-break: break-all;
+      overflow-wrap: break-word;
+      white-space: normal;
     }
 
     .file-meta { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
@@ -320,7 +350,8 @@
       font-weight: 500;
       text-align: right;
       max-width: 68%;
-      word-break: break-word;
+      word-break: break-all;
+      overflow-wrap: break-word;
       font-size: 12px;
     }
 
@@ -744,26 +775,16 @@
     setInterval(checkServerLoad, 30000);
 
     // ── FULLSCREEN AUTO-ROTATE ──
-    // Force true landscape fullscreen by rotating the player element on mobile
+    const videoEl = document.getElementById('myVideo');
+    const playerSection = document.querySelector('.player-section');
+
     player.on('enterfullscreen', async () => {
       try {
+        // Try native orientation lock first
         if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock('landscape');
+          await screen.orientation.lock('landscape').catch(() => {});
         }
-      } catch(e) {
-        // Fallback: CSS rotate trick for browsers that block orientation lock
-        const el = document.getElementById('myVideo');
-        const wrap = el.closest('.plyr') || el.parentElement;
-        const vw = window.screen.width;
-        const vh = window.screen.height;
-        wrap.style.cssText = `
-          position: fixed; top: 0; left: 0; z-index: 9999;
-          width: ${Math.max(vw,vh)}px; height: ${Math.min(vw,vh)}px;
-          transform: rotate(90deg) translateX(0) translateY(-100%);
-          transform-origin: top left;
-          background: #000;
-        `;
-      }
+      } catch(e) {}
     });
 
     player.on('exitfullscreen', async () => {
@@ -772,11 +793,36 @@
           screen.orientation.unlock();
         }
       } catch(e) {}
-      // Reset any CSS rotation fallback
-      const el = document.getElementById('myVideo');
-      const wrap = el.closest('.plyr') || el.parentElement;
-      wrap.style.cssText = '';
     });
+
+    // Override Plyr fullscreen button to use native video fullscreen on mobile
+    // Native video fullscreen on Android auto-rotates properly
+    document.querySelector('.plyr__controls .plyr__control[data-plyr="fullscreen"]') &&
+    document.addEventListener('click', e => {
+      const fsBtn = e.target.closest('[data-plyr="fullscreen"]');
+      if (!fsBtn) return;
+      const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+      if (isMobileDevice) {
+        e.stopPropagation();
+        e.preventDefault();
+        if (videoEl.requestFullscreen) {
+          videoEl.requestFullscreen();
+        } else if (videoEl.webkitEnterFullscreen) {
+          // iOS Safari
+          videoEl.webkitEnterFullscreen();
+        } else if (videoEl.webkitRequestFullscreen) {
+          videoEl.webkitRequestFullscreen();
+        }
+        // Try orientation lock after entering fullscreen
+        setTimeout(async () => {
+          try {
+            if (screen.orientation && screen.orientation.lock) {
+              await screen.orientation.lock('landscape');
+            }
+          } catch(e) {}
+        }, 300);
+      }
+    }, true);
 
     // ── CURSOR FOLLOWER (desktop/mouse only) ──
     const isMouseDevice = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
