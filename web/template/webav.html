@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 
     :root {
       --red: #e50914;
@@ -39,6 +39,13 @@
       display: flex;
       flex-direction: column;
       transition: background 0.3s, color 0.3s;
+    }
+
+    /* Ant cursor — hide default on desktop/mouse devices */
+    @media (hover: hover) and (pointer: fine) {
+      *, *::before, *::after { cursor: none !important; }
+      .plyr, .plyr *, .plyr__video-wrapper, .plyr__controls,
+      .plyr__control, .plyr__progress, video { cursor: none !important; }
     }
 
     /* ── HEADER ── */
@@ -76,7 +83,7 @@
       letter-spacing: 5px;
       display: flex;
       gap: 0px;
-      filter: drop-shadow(0 0 6px rgba(229,9,20,0.5));
+      filter: none;
     }
 
     .logo-main .l {
@@ -737,12 +744,26 @@
     setInterval(checkServerLoad, 30000);
 
     // ── FULLSCREEN AUTO-ROTATE ──
+    // Force true landscape fullscreen by rotating the player element on mobile
     player.on('enterfullscreen', async () => {
       try {
         if (screen.orientation && screen.orientation.lock) {
           await screen.orientation.lock('landscape');
         }
-      } catch(e) {}
+      } catch(e) {
+        // Fallback: CSS rotate trick for browsers that block orientation lock
+        const el = document.getElementById('myVideo');
+        const wrap = el.closest('.plyr') || el.parentElement;
+        const vw = window.screen.width;
+        const vh = window.screen.height;
+        wrap.style.cssText = `
+          position: fixed; top: 0; left: 0; z-index: 9999;
+          width: ${Math.max(vw,vh)}px; height: ${Math.min(vw,vh)}px;
+          transform: rotate(90deg) translateX(0) translateY(-100%);
+          transform-origin: top left;
+          background: #000;
+        `;
+      }
     });
 
     player.on('exitfullscreen', async () => {
@@ -751,7 +772,97 @@
           screen.orientation.unlock();
         }
       } catch(e) {}
+      // Reset any CSS rotation fallback
+      const el = document.getElementById('myVideo');
+      const wrap = el.closest('.plyr') || el.parentElement;
+      wrap.style.cssText = '';
     });
+
+    // ── CURSOR FOLLOWER (desktop/mouse only) ──
+    const isMouseDevice = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    if (isMouseDevice) {
+      // Inject ant CSS
+      const antStyle = document.createElement('style');
+      antStyle.textContent = `
+        #css-ant {
+          position: fixed;
+          pointer-events: none;
+          z-index: 2147483647;
+          width: 28px;
+          height: 16px;
+          top: -40px; left: -40px;
+          will-change: left, top;
+        }
+        #css-ant svg {
+          width: 100%; height: 100%;
+          overflow: visible;
+        }
+        /* Body bob */
+        #css-ant svg { animation: antBob 0.25s ease-in-out infinite alternate; }
+        @keyframes antBob {
+          from { transform: translateY(0px); }
+          to   { transform: translateY(1.5px); }
+        }
+        /* Legs walk */
+        .ant-leg-l1 { animation: legSwingF 0.25s ease-in-out infinite alternate; transform-origin: 8px 8px; }
+        .ant-leg-l2 { animation: legSwingB 0.25s ease-in-out infinite alternate; transform-origin: 13px 8px; }
+        .ant-leg-l3 { animation: legSwingF 0.25s ease-in-out infinite alternate; transform-origin: 18px 8px; }
+        .ant-leg-r1 { animation: legSwingB 0.25s ease-in-out infinite alternate; transform-origin: 8px 8px; }
+        .ant-leg-r2 { animation: legSwingF 0.25s ease-in-out infinite alternate; transform-origin: 13px 8px; }
+        .ant-leg-r3 { animation: legSwingB 0.25s ease-in-out infinite alternate; transform-origin: 18px 8px; }
+        @keyframes legSwingF {
+          from { transform: rotate(-30deg); }
+          to   { transform: rotate(30deg); }
+        }
+        @keyframes legSwingB {
+          from { transform: rotate(30deg); }
+          to   { transform: rotate(-30deg); }
+        }
+        /* Antennae wave */
+        .ant-antenna { animation: antennaWave 0.5s ease-in-out infinite alternate; transform-origin: 22px 4px; }
+        .ant-antenna2 { animation: antennaWave 0.5s ease-in-out infinite alternate-reverse; transform-origin: 24px 4px; }
+        @keyframes antennaWave {
+          from { transform: rotate(-10deg); }
+          to   { transform: rotate(10deg); }
+        }
+      `;
+      document.head.appendChild(antStyle);
+
+      const ant = document.createElement('div');
+      ant.id = 'css-ant';
+      ant.innerHTML = `<svg viewBox="0 0 32 16" xmlns="http://www.w3.org/2000/svg">
+        <!-- Legs left side -->
+        <line class="ant-leg-l1" x1="8" y1="8" x2="3" y2="13" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
+        <line class="ant-leg-l2" x1="13" y1="8" x2="8" y2="14" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
+        <line class="ant-leg-l3" x1="18" y1="8" x2="13" y2="13" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
+        <!-- Legs right side -->
+        <line class="ant-leg-r1" x1="8" y1="8" x2="3" y2="3" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
+        <line class="ant-leg-r2" x1="13" y1="8" x2="8" y2="2" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
+        <line class="ant-leg-r3" x1="18" y1="8" x2="13" y2="3" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
+        <!-- Body segments -->
+        <ellipse cx="8" cy="8" rx="4" ry="3.5" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
+        <ellipse cx="16" cy="8" rx="4.5" ry="3.5" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
+        <ellipse cx="24" cy="8" rx="3.5" ry="3" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
+        <!-- Head -->
+        <circle cx="29" cy="8" r="2.5" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
+        <!-- Eyes -->
+        <circle cx="30" cy="7" r="0.6" fill="#e50914"/>
+        <!-- Antennae -->
+        <line class="ant-antenna"  x1="29" y1="5.5" x2="27" y2="2" stroke="#333" stroke-width="0.9" stroke-linecap="round"/>
+        <line class="ant-antenna2" x1="29" y1="5.5" x2="30" y2="1.5" stroke="#333" stroke-width="0.9" stroke-linecap="round"/>
+      </svg>`;
+      document.body.appendChild(ant);
+
+      let prevX = 0;
+      document.addEventListener('mousemove', e => {
+        const dx = e.clientX - prevX;
+        // Flip ant to face direction of movement
+        ant.style.transform = dx < 0 ? 'translate(-100%, -50%) scaleX(-1)' : 'translate(0, -50%)';
+        ant.style.left = e.clientX + 'px';
+        ant.style.top  = e.clientY + 'px';
+        prevX = e.clientX;
+      });
+    }
 
     // pulse keyframe
     const s = document.createElement('style');
