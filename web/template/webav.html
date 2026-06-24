@@ -4,13 +4,17 @@
   <meta charset="UTF-8" />
   <title>GOFLIX | {{file_name}}</title>
   <link rel="icon" href="https://cdn.jsdelivr.net/gh/Botsthe/DATABASE@main/image/logo.png" type="image/x-icon">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html { max-width: 100vw; overflow-x: hidden; }
+    html {
+      overflow-x: hidden;
+      width: 100%;
+    }
 
     :root {
       --red: #e50914;
@@ -24,10 +28,10 @@
     }
 
     [data-theme="light"] {
-      --bg: #f2f2f2;
+      --bg: #f0f0f0;
       --surface: #ffffff;
-      --surface2: #e8e8e8;
-      --border: #ddd;
+      --surface2: #e2e2e2;
+      --border: #d0d0d0;
       --text: #111111;
       --muted: #888;
     }
@@ -37,18 +41,16 @@
       color: var(--text);
       font-family: 'Inter', sans-serif;
       min-height: 100vh;
-      max-width: 100vw;
+      width: 100%;
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
       transition: background 0.3s, color 0.3s;
     }
 
-    /* Ant cursor — hide default on desktop/mouse devices */
+    /* Ant cursor desktop only */
     @media (hover: hover) and (pointer: fine) {
       *, *::before, *::after { cursor: none !important; }
-      .plyr, .plyr *, .plyr__video-wrapper, .plyr__controls,
-      .plyr__control, .plyr__progress, video { cursor: none !important; }
     }
 
     /* ── HEADER ── */
@@ -56,8 +58,8 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 18px;
-      background: rgba(10,10,10,0.92);
+      padding: 10px 14px;
+      background: rgba(10,10,10,0.95);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -65,36 +67,32 @@
       top: 0;
       z-index: 200;
       width: 100%;
-      max-width: 100vw;
       animation: slideDown 0.5s cubic-bezier(0.22,1,0.36,1) both;
     }
 
     [data-theme="light"] header {
-      background: rgba(242,242,242,0.92);
-      border-bottom: 1px solid rgba(0,0,0,0.08);
+      background: rgba(240,240,240,0.95);
+      border-bottom: 1px solid rgba(0,0,0,0.1);
     }
 
     @keyframes slideDown {
       from { transform: translateY(-100%); opacity: 0; }
-      to   { transform: translateY(0);     opacity: 1; }
+      to   { transform: translateY(0); opacity: 1; }
     }
 
-    .logo-wrap { display: flex; align-items: center; gap: 10px; }
+    .logo-wrap { display: flex; align-items: center; }
 
-    /* Bold bouncing GOFLIX */
     .logo-main {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 30px;
-      letter-spacing: 5px;
+      font-size: 28px;
+      letter-spacing: 4px;
       display: flex;
-      gap: 0px;
       filter: none;
     }
 
     .logo-main .l {
       display: inline-block;
       animation: letterBounce 1.8s ease-in-out infinite;
-      font-weight: 900;
     }
 
     .logo-main .l:nth-child(1) { color: #e50914; animation-delay: 0s; }
@@ -111,82 +109,106 @@
 
     @keyframes letterBounce {
       0%, 100% { transform: translateY(0); }
-      40%       { transform: translateY(-6px); }
+      40%       { transform: translateY(-5px); }
       60%       { transform: translateY(1px); }
     }
 
-    /* Theme toggle */
-    .theme-btn {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 6px 12px;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 0.2s;
-      letter-spacing: 0.3px;
-    }
-
-    .theme-btn:hover { opacity: 0.8; }
+    .header-right { display: flex; align-items: center; gap: 6px; }
 
     .header-badge {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 5px;
       background: rgba(229,9,20,0.1);
       border: 1px solid rgba(229,9,20,0.25);
       border-radius: 20px;
-      padding: 5px 10px;
+      padding: 4px 9px;
       font-size: 10px;
       color: var(--red);
       font-weight: 600;
       letter-spacing: 0.5px;
+      white-space: nowrap;
     }
 
-    .header-right { display: flex; align-items: center; gap: 8px; }
+    .theme-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
 
-    /* ── NATIVE FULLSCREEN FIX ── */
-    video:-webkit-full-screen {
-      width: 100vw !important;
-      height: 100vh !important;
-      object-fit: contain;
-      background: #000;
-    }
-    video:fullscreen {
-      width: 100vw !important;
-      height: 100vh !important;
-      object-fit: contain;
-      background: #000;
-    }
-    .plyr:-webkit-full-screen {
-      width: 100vw !important;
-      height: 100vh !important;
-    }
-    .plyr:fullscreen {
-      width: 100vw !important;
-      height: 100vh !important;
-    }
+    .theme-btn:hover { opacity: 0.8; }
 
     /* ── PLAYER ── */
-    .player-section { background: #000; position: relative; width: 100%; overflow: hidden; }
+    .player-section {
+      background: #000;
+      width: 100%;
+      position: relative;
+    }
 
+    /* Fix Plyr controls cut off on right — key fix */
     .plyr {
       --plyr-color-main: #e50914;
       --plyr-video-control-color: #fff;
-      width: 100%;
-      max-height: 72vh;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .plyr__controls {
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      padding: 6px 10px !important;
+    }
+
+    .plyr__progress {
+      width: 100% !important;
+      flex: 1 !important;
+      min-width: 0 !important;
+    }
+
+    .plyr__volume {
+      min-width: 60px !important;
+      max-width: 80px !important;
+    }
+
+    /* Fullscreen — fill entire screen */
+    .plyr--fullscreen-active,
+    .plyr--fullscreen-active .plyr__video-wrapper,
+    .plyr--fullscreen-active video {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-height: 100vh !important;
+    }
+
+    video:-webkit-full-screen { width: 100vw !important; height: 100vh !important; object-fit: contain; background: #000; }
+    video:fullscreen           { width: 100vw !important; height: 100vh !important; object-fit: contain; background: #000; }
+
+    /* Fullscreen controls must stay inside screen */
+    .plyr--fullscreen-active .plyr__controls {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100vw !important;
+      box-sizing: border-box !important;
+      padding: 8px 12px !important;
+      z-index: 9999;
     }
 
     /* ── CONTENT ── */
     .content {
       max-width: 820px;
       margin: 0 auto;
-      padding: 18px 14px 48px;
+      padding: 16px 14px 48px;
       width: 100%;
       overflow-x: hidden;
     }
@@ -199,15 +221,14 @@
       line-height: 1.5;
       word-break: break-all;
       overflow-wrap: break-word;
-      white-space: normal;
     }
 
-    .file-meta { font-size: 12px; color: var(--muted); margin-bottom: 18px; }
+    .file-meta { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
 
     .divider {
       height: 1px;
       background: linear-gradient(90deg, transparent, var(--border), transparent);
-      margin: 16px 0;
+      margin: 14px 0;
     }
 
     .section-label {
@@ -232,8 +253,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 7px;
-      padding: 14px 6px;
+      gap: 6px;
+      padding: 13px 4px;
       border-radius: var(--radius);
       border: 1px solid var(--border);
       background: var(--surface);
@@ -241,29 +262,16 @@
       font-size: 11px;
       font-weight: 500;
       cursor: pointer;
-      text-decoration: none;
       transition: all 0.2s ease;
       -webkit-tap-highlight-color: transparent;
-      position: relative;
-      overflow: hidden;
+      width: 100%;
     }
 
-    .btn-player i { font-size: 22px; }
-
-    .btn-player:hover {
-      background: var(--surface2);
-      border-color: #3a3a3a;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    }
-
+    .btn-player i { font-size: 20px; }
+    .btn-player:hover { background: var(--surface2); transform: translateY(-2px); }
     .btn-player.mx   i { color: #ff6b35; }
     .btn-player.vlc  i { color: #f08000; }
     .btn-player.playit i { color: #00c6ff; }
-
-    .btn-player.mx:hover   { border-color: rgba(255,107,53,0.3); }
-    .btn-player.vlc:hover  { border-color: rgba(240,128,0,0.3); }
-    .btn-player.playit:hover { border-color: rgba(0,198,255,0.3); }
 
     /* ── ACTION BUTTONS ── */
     .action-buttons {
@@ -277,27 +285,24 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 13px;
+      gap: 7px;
+      padding: 13px 8px;
       border-radius: var(--radius);
       border: none;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      text-decoration: none;
       transition: all 0.2s ease;
       -webkit-tap-highlight-color: transparent;
+      width: 100%;
     }
-
-    .btn-action:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
 
     .btn-download { background: var(--red); color: #fff; }
     .btn-download:hover { background: #ff1a1a; color: #fff; }
-
     .btn-share { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
     .btn-share:hover { background: var(--surface); color: var(--text); }
 
-    /* ── MOVIE SEARCH BUTTON ── */
+    /* ── MOVIE BUTTON ── */
     .btn-movie {
       display: flex;
       align-items: center;
@@ -305,64 +310,60 @@
       gap: 8px;
       padding: 13px;
       border-radius: var(--radius);
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
       color: #e2b96f;
       border: 1px solid rgba(226,185,111,0.2);
       font-size: 13px;
       font-weight: 600;
-      cursor: pointer;
       text-decoration: none;
       width: 100%;
+      margin-bottom: 8px;
       transition: all 0.2s ease;
       -webkit-tap-highlight-color: transparent;
-      margin-bottom: 8px;
-      letter-spacing: 0.3px;
     }
 
-    .btn-movie:hover {
-      color: #f0ca7e;
-      border-color: rgba(226,185,111,0.4);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(226,185,111,0.1);
-    }
+    .btn-movie:hover { color: #f0ca7e; transform: translateY(-2px); }
 
-    /* ── FILE INFO CARD ── */
+    /* ── INFO CARD ── */
     .info-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
+      width: 100%;
     }
 
     .info-row {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      padding: 11px 14px;
+      align-items: flex-start;
+      padding: 10px 14px;
       border-bottom: 1px solid var(--border);
       font-size: 13px;
+      gap: 10px;
     }
 
     .info-row:last-child { border-bottom: none; }
-    .info-row .label { color: var(--muted); font-size: 12px; }
+    .info-row .label { color: var(--muted); font-size: 12px; white-space: nowrap; flex-shrink: 0; }
     .info-row .value {
       color: var(--text);
       font-weight: 500;
       text-align: right;
-      max-width: 68%;
+      font-size: 12px;
       word-break: break-all;
       overflow-wrap: break-word;
-      font-size: 12px;
+      min-width: 0;
     }
 
-    /* ── SERVER STATUS ── */
+    /* ── SERVER CARD ── */
     .server-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 14px;
-      overflow: hidden;
       position: relative;
+      overflow: hidden;
+      width: 100%;
     }
 
     .server-card::before {
@@ -375,18 +376,9 @@
       animation: shimmer 2s linear infinite;
     }
 
-    @keyframes shimmer {
-      0%   { background-position: 200% center; }
-      100% { background-position: -200% center; }
-    }
+    @keyframes shimmer { 0% { background-position: 200%; } 100% { background-position: -200%; } }
 
-    .server-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-
+    .server-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .server-top span { font-size: 12px; color: var(--muted); }
     #load-label { font-size: 12px; font-weight: 600; }
 
@@ -395,8 +387,7 @@
       border-radius: 30px;
       height: 6px;
       overflow: hidden;
-      margin-bottom: 12px;
-      position: relative;
+      margin-bottom: 10px;
     }
 
     #load-bar {
@@ -404,30 +395,9 @@
       width: 0%;
       border-radius: 30px;
       transition: width 1.2s cubic-bezier(0.4,0,0.2,1), background 0.5s;
-      position: relative;
     }
 
-    #load-bar::after {
-      content: '';
-      position: absolute;
-      top: 0; right: 0;
-      width: 20px; height: 100%;
-      background: rgba(255,255,255,0.3);
-      border-radius: 30px;
-      animation: barShine 1.5s ease-in-out infinite;
-    }
-
-    @keyframes barShine {
-      0%, 100% { opacity: 0; }
-      50%       { opacity: 1; }
-    }
-
-    .server-bottom {
-      display: flex;
-      justify-content: space-between;
-      font-size: 11px;
-      color: var(--muted);
-    }
+    .server-bottom { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 
     /* ── FOOTER ── */
     footer {
@@ -437,7 +407,6 @@
       font-size: 11px;
       color: var(--muted);
       border-top: 1px solid var(--border);
-      letter-spacing: 0.5px;
     }
 
     footer a { color: var(--red); text-decoration: none; }
@@ -450,17 +419,18 @@
       transform: translateX(-50%) translateY(16px);
       background: #1e1e1e;
       color: #fff;
-      padding: 10px 22px;
+      padding: 10px 20px;
       border-radius: 30px;
       font-size: 13px;
       font-weight: 500;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.28s ease, transform 0.28s ease;
-      z-index: 999;
+      z-index: 9999;
       white-space: nowrap;
       border: 1px solid #333;
       box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      max-width: 90vw;
     }
 
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -488,10 +458,7 @@
       animation: slideUp 0.3s cubic-bezier(0.22,1,0.36,1) both;
     }
 
-    @keyframes slideUp {
-      from { transform: translateY(100%); }
-      to   { transform: translateY(0); }
-    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
     .mx-sheet h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; color: #fff; }
     .mx-sheet p { font-size: 12px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
@@ -499,18 +466,10 @@
     .mx-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
     .mx-btns a, .mx-btns button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 13px;
-      border-radius: var(--radius);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      border: none;
-      transition: opacity 0.2s;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 13px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      text-decoration: none; border: none; transition: opacity 0.2s;
     }
 
     .mx-btns a:hover, .mx-btns button:hover { opacity: 0.85; }
@@ -518,10 +477,11 @@
     .btn-mx-install { background: #1e1e1e; color: #f0f0f0; border: 1px solid #333 !important; }
     .btn-mx-cancel { grid-column: span 2; background: transparent; color: var(--muted); font-size: 12px; }
 
-    @media (max-width: 480px) {
-      .btn-player { padding: 12px 4px; font-size: 11px; }
-      .btn-player i { font-size: 20px; }
-      .logo-main { font-size: 26px; }
+    @media (max-width: 360px) {
+      .logo-main { font-size: 22px; letter-spacing: 2px; }
+      .header-badge { display: none; }
+      .btn-player { padding: 11px 2px; font-size: 10px; }
+      .btn-player i { font-size: 18px; }
     }
   </style>
 </head>
@@ -536,7 +496,7 @@
     </div>
     <div class="header-right">
       <div class="header-badge">
-        <i class="fa-solid fa-circle" style="color:#e50914; animation: pulse 1.5s infinite; font-size:8px;"></i>
+        <i class="fa-solid fa-circle" style="color:#e50914; animation: pulse 1.5s infinite; font-size:7px;"></i>
         LIVE
       </div>
       <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">
@@ -560,24 +520,19 @@
 
     <div class="divider"></div>
 
-    <!-- EXTERNAL PLAYERS -->
     <p class="section-label">Open in App</p>
     <div class="player-buttons">
       <button class="btn-player mx" onclick="mx_player()">
-        <i class="fa-solid fa-play-circle"></i>
-        MX Player
+        <i class="fa-solid fa-play-circle"></i>MX Player
       </button>
       <button class="btn-player vlc" onclick="vlc_player()">
-        <i class="fa-solid fa-circle-play"></i>
-        VLC
+        <i class="fa-solid fa-circle-play"></i>VLC
       </button>
       <button class="btn-player playit" onclick="playit_player()">
-        <i class="fa-solid fa-tv"></i>
-        Play it
+        <i class="fa-solid fa-tv"></i>Play it
       </button>
     </div>
 
-    <!-- DOWNLOAD + SHARE -->
     <div class="action-buttons">
       <button class="btn-action btn-download" onclick="streamDownload()">
         <i class="fa-solid fa-download"></i> Download
@@ -587,14 +542,12 @@
       </button>
     </div>
 
-    <!-- MOVIE SEARCH GROUP -->
     <a href="https://t.me/gofixmovie" target="_blank" class="btn-movie">
-      <i class="fa-solid fa-film" style="font-size:15px"></i> 🎬 Movie Search Group
+      <i class="fa-solid fa-film"></i> 🎬 Movie Search Group
     </a>
 
     <div class="divider"></div>
 
-    <!-- FILE INFO -->
     <p class="section-label">File Info</p>
     <div class="info-card">
       <div class="info-row">
@@ -609,7 +562,6 @@
 
     <div class="divider"></div>
 
-    <!-- SERVER STATUS -->
     <p class="section-label">Server Status</p>
     <div class="server-card">
       <div class="server-top">
@@ -617,10 +569,10 @@
         <span id="load-label" style="color:#4caf50;">Checking...</span>
       </div>
       <div class="load-track">
-        <div id="load-bar" style="background: linear-gradient(90deg,#4caf50,#8bc34a);"></div>
+        <div id="load-bar" style="background:linear-gradient(90deg,#4caf50,#8bc34a);"></div>
       </div>
       <div class="server-bottom">
-        <span><i class="fa-solid fa-circle" style="color:#4caf50; font-size:7px; margin-right:4px;"></i>Online</span>
+        <span><i class="fa-solid fa-circle" style="color:#4caf50;font-size:7px;margin-right:4px;"></i>Online</span>
         <span id="load-ping">Ping: --ms</span>
         <span id="load-time"></span>
       </div>
@@ -628,12 +580,10 @@
 
   </div>
 
-  <!-- FOOTER -->
   <footer>
     Powered by <a href="https://t.me/Goflix_Disscussion">GOFLIX</a> &nbsp;·&nbsp; © 2026 GOFLIX · All Rights Reserved
   </footer>
 
-  <!-- TOAST -->
   <div id="toast"></div>
 
   <!-- MX MODAL -->
@@ -656,7 +606,8 @@
     const player = new Plyr('#myVideo', {
       controls: ['play-large','play','progress','current-time','duration','mute','volume','fullscreen'],
       resetOnEnd: false,
-      keyboard: { focused: true, global: true }
+      keyboard: { focused: true, global: true },
+      fullscreen: { enabled: true, fallback: true, iosNative: true }
     });
 
     const fileUrl  = "{{file_url}}";
@@ -683,12 +634,10 @@
 
     // ── MX PLAYER ──
     function mx_player() {
-      const intentUrl = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent(fileName)};S.subs_name=${encodeURIComponent(fileName)};end`;
-      // Try to open MX Player via intent; if not installed show modal
+      const intentUrl = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent(fileName)};end`;
       const start = Date.now();
       window.location.href = intentUrl;
       setTimeout(() => {
-        // If still on page after 1.5s, MX is likely not installed — show modal
         if (Date.now() - start < 2000) {
           document.getElementById('mx-modal').classList.add('open');
         }
@@ -718,9 +667,7 @@
     // ── DOWNLOAD ──
     function streamDownload() {
       const a = document.createElement('a');
-      a.href = fileUrl;
-      a.download = fileName;
-      a.click();
+      a.href = fileUrl; a.download = fileName; a.click();
       showToast("Download started...");
     }
 
@@ -735,54 +682,14 @@
       }
     }
 
-    // ── SERVER LOAD ──
-    async function checkServerLoad() {
-      const bar   = document.getElementById('load-bar');
-      const label = document.getElementById('load-label');
-      const ping  = document.getElementById('load-ping');
-      const time  = document.getElementById('load-time');
-
-      const now = new Date();
-      time.textContent = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-
-      try {
-        const start = performance.now();
-        await fetch(window.location.href, { method: 'HEAD', cache: 'no-store' }).catch(() => {});
-        const ms = Math.round(performance.now() - start);
-
-        ping.textContent = `Ping: ${ms}ms`;
-
-        let pct, color, text;
-        if (ms < 80) {
-          pct = 15 + Math.random() * 20; color = '#4caf50'; text = 'Low';
-        } else if (ms < 250) {
-          pct = 40 + Math.random() * 25; color = '#ff9800'; text = 'Medium';
-        } else {
-          pct = 65 + Math.random() * 25; color = '#f44336'; text = 'High';
-        }
-
-        bar.style.width = pct.toFixed(0) + '%';
-        bar.style.background = `linear-gradient(90deg, ${color}, ${color}bb)`;
-        label.style.color = color;
-        label.textContent = `${text} (${pct.toFixed(0)}%)`;
-      } catch {
-        label.textContent = 'Unknown';
-        ping.textContent = 'Ping: --ms';
-      }
-    }
-
-    checkServerLoad();
-    setInterval(checkServerLoad, 30000);
-
-    // ── FULLSCREEN AUTO-ROTATE ──
+    // ── FULLSCREEN + ORIENTATION ──
     const videoEl = document.getElementById('myVideo');
-    const playerSection = document.querySelector('.player-section');
+    const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
     player.on('enterfullscreen', async () => {
       try {
-        // Try native orientation lock first
         if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock('landscape').catch(() => {});
+          await screen.orientation.lock('landscape');
         }
       } catch(e) {}
     });
@@ -795,25 +702,19 @@
       } catch(e) {}
     });
 
-    // Override Plyr fullscreen button to use native video fullscreen on mobile
-    // Native video fullscreen on Android auto-rotates properly
-    document.querySelector('.plyr__controls .plyr__control[data-plyr="fullscreen"]') &&
-    document.addEventListener('click', e => {
-      const fsBtn = e.target.closest('[data-plyr="fullscreen"]');
-      if (!fsBtn) return;
-      const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-      if (isMobileDevice) {
-        e.stopPropagation();
-        e.preventDefault();
+    // On mobile use native video fullscreen for proper landscape
+    if (isMobileDevice) {
+      document.addEventListener('click', e => {
+        const fsBtn = e.target.closest('[data-plyr="fullscreen"]');
+        if (!fsBtn) return;
+        e.stopPropagation(); e.preventDefault();
         if (videoEl.requestFullscreen) {
           videoEl.requestFullscreen();
         } else if (videoEl.webkitEnterFullscreen) {
-          // iOS Safari
           videoEl.webkitEnterFullscreen();
         } else if (videoEl.webkitRequestFullscreen) {
           videoEl.webkitRequestFullscreen();
         }
-        // Try orientation lock after entering fullscreen
         setTimeout(async () => {
           try {
             if (screen.orientation && screen.orientation.lock) {
@@ -821,98 +722,95 @@
             }
           } catch(e) {}
         }, 300);
-      }
-    }, true);
+      }, true);
+    }
 
-    // ── CURSOR FOLLOWER (desktop/mouse only) ──
+    // ── SERVER LOAD ──
+    async function checkServerLoad() {
+      const bar = document.getElementById('load-bar');
+      const label = document.getElementById('load-label');
+      const ping = document.getElementById('load-ping');
+      const time = document.getElementById('load-time');
+
+      time.textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+      try {
+        const start = performance.now();
+        await fetch(window.location.href, { method: 'HEAD', cache: 'no-store' }).catch(() => {});
+        const ms = Math.round(performance.now() - start);
+        ping.textContent = `Ping: ${ms}ms`;
+
+        let pct, color, text;
+        if (ms < 80)       { pct = 15 + Math.random()*20; color='#4caf50'; text='Low'; }
+        else if (ms < 250) { pct = 40 + Math.random()*25; color='#ff9800'; text='Medium'; }
+        else               { pct = 65 + Math.random()*25; color='#f44336'; text='High'; }
+
+        bar.style.width = pct.toFixed(0) + '%';
+        bar.style.background = `linear-gradient(90deg,${color},${color}bb)`;
+        label.style.color = color;
+        label.textContent = `${text} (${pct.toFixed(0)}%)`;
+      } catch {
+        label.textContent = 'Unknown'; ping.textContent = 'Ping: --ms';
+      }
+    }
+
+    checkServerLoad();
+    setInterval(checkServerLoad, 30000);
+
+    // ── ANT CURSOR (desktop only) ──
     const isMouseDevice = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     if (isMouseDevice) {
-      // Inject ant CSS
       const antStyle = document.createElement('style');
       antStyle.textContent = `
-        #css-ant {
-          position: fixed;
-          pointer-events: none;
-          z-index: 2147483647;
-          width: 28px;
-          height: 16px;
-          top: -40px; left: -40px;
-          will-change: left, top;
-        }
-        #css-ant svg {
-          width: 100%; height: 100%;
-          overflow: visible;
-        }
-        /* Body bob */
-        #css-ant svg { animation: antBob 0.25s ease-in-out infinite alternate; }
-        @keyframes antBob {
-          from { transform: translateY(0px); }
-          to   { transform: translateY(1.5px); }
-        }
-        /* Legs walk */
-        .ant-leg-l1 { animation: legSwingF 0.25s ease-in-out infinite alternate; transform-origin: 8px 8px; }
-        .ant-leg-l2 { animation: legSwingB 0.25s ease-in-out infinite alternate; transform-origin: 13px 8px; }
-        .ant-leg-l3 { animation: legSwingF 0.25s ease-in-out infinite alternate; transform-origin: 18px 8px; }
-        .ant-leg-r1 { animation: legSwingB 0.25s ease-in-out infinite alternate; transform-origin: 8px 8px; }
-        .ant-leg-r2 { animation: legSwingF 0.25s ease-in-out infinite alternate; transform-origin: 13px 8px; }
-        .ant-leg-r3 { animation: legSwingB 0.25s ease-in-out infinite alternate; transform-origin: 18px 8px; }
-        @keyframes legSwingF {
-          from { transform: rotate(-30deg); }
-          to   { transform: rotate(30deg); }
-        }
-        @keyframes legSwingB {
-          from { transform: rotate(30deg); }
-          to   { transform: rotate(-30deg); }
-        }
-        /* Antennae wave */
-        .ant-antenna { animation: antennaWave 0.5s ease-in-out infinite alternate; transform-origin: 22px 4px; }
-        .ant-antenna2 { animation: antennaWave 0.5s ease-in-out infinite alternate-reverse; transform-origin: 24px 4px; }
-        @keyframes antennaWave {
-          from { transform: rotate(-10deg); }
-          to   { transform: rotate(10deg); }
-        }
+        #css-ant { position:fixed; pointer-events:none; z-index:2147483647; width:28px; height:16px; top:-40px; left:-40px; will-change:left,top; }
+        #css-ant svg { width:100%; height:100%; overflow:visible; animation:antBob 0.25s ease-in-out infinite alternate; }
+        @keyframes antBob { from{transform:translateY(0)} to{transform:translateY(1.5px)} }
+        .al1{animation:legSwingF 0.25s ease-in-out infinite alternate;transform-origin:8px 8px;}
+        .al2{animation:legSwingB 0.25s ease-in-out infinite alternate;transform-origin:13px 8px;}
+        .al3{animation:legSwingF 0.25s ease-in-out infinite alternate;transform-origin:18px 8px;}
+        .ar1{animation:legSwingB 0.25s ease-in-out infinite alternate;transform-origin:8px 8px;}
+        .ar2{animation:legSwingF 0.25s ease-in-out infinite alternate;transform-origin:13px 8px;}
+        .ar3{animation:legSwingB 0.25s ease-in-out infinite alternate;transform-origin:18px 8px;}
+        @keyframes legSwingF{from{transform:rotate(-30deg)}to{transform:rotate(30deg)}}
+        @keyframes legSwingB{from{transform:rotate(30deg)}to{transform:rotate(-30deg)}}
+        .aa{animation:antennaWave 0.5s ease-in-out infinite alternate;transform-origin:22px 4px;}
+        .aa2{animation:antennaWave 0.5s ease-in-out infinite alternate-reverse;transform-origin:24px 4px;}
+        @keyframes antennaWave{from{transform:rotate(-10deg)}to{transform:rotate(10deg)}}
       `;
       document.head.appendChild(antStyle);
 
       const ant = document.createElement('div');
       ant.id = 'css-ant';
       ant.innerHTML = `<svg viewBox="0 0 32 16" xmlns="http://www.w3.org/2000/svg">
-        <!-- Legs left side -->
-        <line class="ant-leg-l1" x1="8" y1="8" x2="3" y2="13" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <line class="ant-leg-l2" x1="13" y1="8" x2="8" y2="14" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <line class="ant-leg-l3" x1="18" y1="8" x2="13" y2="13" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <!-- Legs right side -->
-        <line class="ant-leg-r1" x1="8" y1="8" x2="3" y2="3" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <line class="ant-leg-r2" x1="13" y1="8" x2="8" y2="2" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <line class="ant-leg-r3" x1="18" y1="8" x2="13" y2="3" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <!-- Body segments -->
+        <line class="al1" x1="8" y1="8" x2="3" y2="13" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
+        <line class="al2" x1="13" y1="8" x2="8" y2="14" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
+        <line class="al3" x1="18" y1="8" x2="13" y2="13" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
+        <line class="ar1" x1="8" y1="8" x2="3" y2="3" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
+        <line class="ar2" x1="13" y1="8" x2="8" y2="2" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
+        <line class="ar3" x1="18" y1="8" x2="13" y2="3" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
         <ellipse cx="8" cy="8" rx="4" ry="3.5" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
         <ellipse cx="16" cy="8" rx="4.5" ry="3.5" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
         <ellipse cx="24" cy="8" rx="3.5" ry="3" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
-        <!-- Head -->
         <circle cx="29" cy="8" r="2.5" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
-        <!-- Eyes -->
         <circle cx="30" cy="7" r="0.6" fill="#e50914"/>
-        <!-- Antennae -->
-        <line class="ant-antenna"  x1="29" y1="5.5" x2="27" y2="2" stroke="#333" stroke-width="0.9" stroke-linecap="round"/>
-        <line class="ant-antenna2" x1="29" y1="5.5" x2="30" y2="1.5" stroke="#333" stroke-width="0.9" stroke-linecap="round"/>
+        <line class="aa"  x1="29" y1="5.5" x2="27" y2="2" stroke="#333" stroke-width="0.9" stroke-linecap="round"/>
+        <line class="aa2" x1="29" y1="5.5" x2="30" y2="1.5" stroke="#333" stroke-width="0.9" stroke-linecap="round"/>
       </svg>`;
       document.body.appendChild(ant);
 
       let prevX = 0;
       document.addEventListener('mousemove', e => {
         const dx = e.clientX - prevX;
-        // Flip ant to face direction of movement
-        ant.style.transform = dx < 0 ? 'translate(-100%, -50%) scaleX(-1)' : 'translate(0, -50%)';
+        ant.style.transform = dx < 0 ? 'translate(-100%,-50%) scaleX(-1)' : 'translate(0,-50%)';
         ant.style.left = e.clientX + 'px';
         ant.style.top  = e.clientY + 'px';
         prevX = e.clientX;
       });
     }
 
-    // pulse keyframe
+    // Keyframes
     const s = document.createElement('style');
-    s.textContent = `@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }`;
+    s.textContent = `@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.2}}`;
     document.head.appendChild(s);
   </script>
 </body>
