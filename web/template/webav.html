@@ -6,34 +6,35 @@
   <link rel="icon" href="https://cdn.jsdelivr.net/gh/Botsthe/DATABASE@main/image/logo.png" type="image/x-icon">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html {
-      overflow-x: hidden;
-      width: 100%;
-    }
+    html { overflow-x: hidden; width: 100%; }
 
     :root {
       --red: #e50914;
-      --bg: #0a0a0a;
-      --surface: #141414;
-      --surface2: #1c1c1c;
-      --border: #2a2a2a;
+      --sys: #00e58a;
+      --sys-dim: #00e58a55;
+      --cyan: #29d3ff;
+      --bg: #07080a;
+      --surface: #121316;
+      --surface2: #1a1c20;
+      --border: #262931;
       --text: #f0f0f0;
-      --muted: #777;
-      --radius: 10px;
+      --muted: #7a7f8a;
+      --radius: 12px;
+      --mono: 'Space Mono', monospace;
     }
 
     [data-theme="light"] {
-      --bg: #f0f0f0;
+      --bg: #eef0f2;
       --surface: #ffffff;
-      --surface2: #e2e2e2;
-      --border: #d0d0d0;
-      --text: #111111;
-      --muted: #888;
+      --surface2: #e6e8eb;
+      --border: #d3d7dc;
+      --text: #111318;
+      --muted: #767c86;
     }
 
     body {
@@ -45,8 +46,40 @@
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
+      position: relative;
       transition: background 0.3s, color 0.3s;
     }
+
+    /* ── AMBIENT SERVER-GRID BACKGROUND ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0,229,138,0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,138,0.045) 1px, transparent 1px);
+      background-size: 34px 34px;
+      -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 0%, #000 30%, transparent 80%);
+      mask-image: radial-gradient(ellipse 70% 55% at 50% 0%, #000 30%, transparent 80%);
+    }
+    [data-theme="light"] body::before { opacity: 0.4; }
+
+    body::after {
+      content: '';
+      position: fixed;
+      left: 0; right: 0;
+      height: 2px;
+      z-index: 0;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent, var(--sys-dim), transparent);
+      animation: scanline 5s linear infinite;
+      opacity: 0.5;
+    }
+    @keyframes scanline { 0% { top: -2%; } 100% { top: 102%; } }
+
+    header, .player-section, .content, footer, #toast, #mx-modal { position: relative; z-index: 1; }
 
     /* Ant cursor desktop only */
     @media (hover: hover) and (pointer: fine) {
@@ -59,10 +92,10 @@
       align-items: center;
       justify-content: space-between;
       padding: 10px 14px;
-      background: rgba(10,10,10,0.95);
+      background: rgba(7,8,10,0.9);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid rgba(0,229,138,0.12);
       position: sticky;
       top: 0;
       z-index: 200;
@@ -71,8 +104,8 @@
     }
 
     [data-theme="light"] header {
-      background: rgba(240,240,240,0.95);
-      border-bottom: 1px solid rgba(0,0,0,0.1);
+      background: rgba(238,240,242,0.92);
+      border-bottom: 1px solid rgba(0,0,0,0.08);
     }
 
     @keyframes slideDown {
@@ -80,7 +113,7 @@
       to   { transform: translateY(0); opacity: 1; }
     }
 
-    .logo-wrap { display: flex; align-items: center; }
+    .logo-wrap { display: flex; align-items: center; gap: 8px; }
 
     .logo-main {
       font-family: 'Bebas Neue', sans-serif;
@@ -113,6 +146,20 @@
       60%       { transform: translateY(1px); }
     }
 
+    .node-tag {
+      font-family: var(--mono);
+      font-size: 9px;
+      color: var(--sys);
+      letter-spacing: 1px;
+      border: 1px solid rgba(0,229,138,0.3);
+      background: rgba(0,229,138,0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+      display: none;
+    }
+    @media (min-width: 420px) { .node-tag { display: inline-block; } }
+
     .header-right { display: flex; align-items: center; gap: 6px; }
 
     .header-badge {
@@ -129,6 +176,22 @@
       letter-spacing: 0.5px;
       white-space: nowrap;
     }
+
+    .icon-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text);
+      font-size: 13px;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .icon-btn:hover { opacity: 0.8; border-color: var(--sys); color: var(--sys); }
 
     .theme-btn {
       background: var(--surface2);
@@ -154,7 +217,18 @@
       position: relative;
     }
 
-    /* Fix Plyr controls cut off on right — key fix */
+    .player-section::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: -1px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--red), var(--sys), var(--cyan), var(--red));
+      background-size: 300% 100%;
+      animation: gradientMove 4s linear infinite;
+      z-index: 2;
+    }
+    @keyframes gradientMove { 0% { background-position: 0% 0; } 100% { background-position: 300% 0; } }
+
     .plyr {
       --plyr-color-main: #e50914;
       --plyr-video-control-color: #fff;
@@ -180,7 +254,6 @@
       max-width: 80px !important;
     }
 
-    /* Fullscreen — fill entire screen */
     .plyr--fullscreen-active,
     .plyr--fullscreen-active .plyr__video-wrapper,
     .plyr--fullscreen-active video {
@@ -192,7 +265,6 @@
     video:-webkit-full-screen { width: 100vw !important; height: 100vh !important; object-fit: contain; background: #000; }
     video:fullscreen           { width: 100vw !important; height: 100vh !important; object-fit: contain; background: #000; }
 
-    /* Fullscreen controls must stay inside screen */
     .plyr--fullscreen-active .plyr__controls {
       position: fixed !important;
       bottom: 0 !important;
@@ -202,6 +274,34 @@
       box-sizing: border-box !important;
       padding: 8px 12px !important;
       z-index: 9999;
+    }
+
+    /* Audio fallback banner */
+    #audio-warning {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,152,0,0.1);
+      border: 1px solid rgba(255,152,0,0.35);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #ffb74d;
+      margin: 12px 0;
+    }
+    #audio-warning.show { display: flex; }
+    #audio-warning i.warn-ico { font-size: 16px; flex-shrink: 0; }
+    #audio-warning .aw-text { flex: 1; line-height: 1.4; }
+    #audio-warning button {
+      background: #f08000;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      cursor: pointer;
     }
 
     /* ── CONTENT ── */
@@ -238,12 +338,20 @@
       text-transform: uppercase;
       color: var(--muted);
       margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-label .blink-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--sys);
+      animation: pulse 1.5s infinite;
     }
 
     /* ── PLAYER BUTTONS ── */
     .player-buttons {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
       margin-bottom: 10px;
     }
@@ -259,7 +367,7 @@
       border: 1px solid var(--border);
       background: var(--surface);
       color: var(--text);
-      font-size: 11px;
+      font-size: 10.5px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -267,11 +375,16 @@
       width: 100%;
     }
 
-    .btn-player i { font-size: 20px; }
+    .btn-player i { font-size: 19px; }
     .btn-player:hover { background: var(--surface2); transform: translateY(-2px); }
     .btn-player.mx   i { color: #ff6b35; }
     .btn-player.vlc  i { color: #f08000; }
     .btn-player.playit i { color: #00c6ff; }
+    .btn-player.tg   i { color: #29b6f6; }
+
+    @media (max-width: 420px) {
+      .player-buttons { grid-template-columns: repeat(2, 1fr); }
+    }
 
     /* ── ACTION BUTTONS ── */
     .action-buttons {
@@ -297,10 +410,18 @@
       width: 100%;
     }
 
-    .btn-download { background: var(--red); color: #fff; }
+    .btn-download { background: var(--red); color: #fff; position: relative; overflow: hidden; }
     .btn-download:hover { background: #ff1a1a; color: #fff; }
     .btn-share { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
     .btn-share:hover { background: var(--surface); color: var(--text); }
+
+    /* download progress sheen */
+    .btn-download .dl-fill {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
+      background: rgba(255,255,255,0.18);
+      transition: width 0.2s linear;
+    }
+    .btn-download span, .btn-download i { position: relative; z-index: 1; }
 
     /* ── MOVIE BUTTON ── */
     .btn-movie {
@@ -323,6 +444,26 @@
     }
 
     .btn-movie:hover { color: #f0ca7e; transform: translateY(-2px); }
+
+    .btn-tg-web {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 13px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, #1c2b39 0%, #0e2a3d 100%);
+      color: #6ec6ff;
+      border: 1px solid rgba(41,182,246,0.25);
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      width: 100%;
+      margin-bottom: 8px;
+      transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-tg-web:hover { color: #a6ddff; transform: translateY(-2px); }
 
     /* ── INFO CARD ── */
     .info-card {
@@ -355,15 +496,18 @@
       min-width: 0;
     }
 
-    /* ── SERVER CARD ── */
+    /* ── SERVER CARD (unique terminal dashboard look) ── */
     .server-card {
-      background: var(--surface);
+      background:
+        radial-gradient(circle at 100% 0%, rgba(0,229,138,0.07), transparent 60%),
+        var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 14px;
       position: relative;
       overflow: hidden;
       width: 100%;
+      font-family: var(--mono);
     }
 
     .server-card::before {
@@ -371,23 +515,23 @@
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 2px;
-      background: linear-gradient(90deg, #e50914, #ff6b35, #4caf50);
+      background: linear-gradient(90deg, #e50914, #ff6b35, #00e58a, #29d3ff);
       background-size: 200%;
       animation: shimmer 2s linear infinite;
     }
 
     @keyframes shimmer { 0% { background-position: 200%; } 100% { background-position: -200%; } }
 
-    .server-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-    .server-top span { font-size: 12px; color: var(--muted); }
-    #load-label { font-size: 12px; font-weight: 600; }
+    .server-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .server-top .st-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; display:flex; align-items:center; gap:6px; }
+    #load-label { font-size: 12px; font-weight: 700; }
 
     .load-track {
       background: var(--surface2);
       border-radius: 30px;
       height: 6px;
       overflow: hidden;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
     #load-bar {
@@ -397,7 +541,33 @@
       transition: width 1.2s cubic-bezier(0.4,0,0.2,1), background 0.5s;
     }
 
-    .server-bottom { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .stat-tile {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 4px;
+      text-align: center;
+    }
+    .stat-tile .st-val { font-size: 12px; font-weight: 700; color: var(--sys); }
+    .stat-tile .st-key { font-size: 8px; color: var(--muted); letter-spacing: 0.5px; margin-top: 2px; }
+
+    .server-bottom {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: var(--muted);
+      border-top: 1px dashed var(--border);
+      padding-top: 10px;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .server-bottom span { display: flex; align-items: center; gap: 4px; }
 
     /* ── FOOTER ── */
     footer {
@@ -477,11 +647,14 @@
     .btn-mx-install { background: #1e1e1e; color: #f0f0f0; border: 1px solid #333 !important; }
     .btn-mx-cancel { grid-column: span 2; background: transparent; color: var(--muted); font-size: 12px; }
 
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.2; } }
+
     @media (max-width: 360px) {
       .logo-main { font-size: 22px; letter-spacing: 2px; }
       .header-badge { display: none; }
-      .btn-player { padding: 11px 2px; font-size: 10px; }
-      .btn-player i { font-size: 18px; }
+      .btn-player { padding: 11px 2px; font-size: 9.5px; }
+      .btn-player i { font-size: 17px; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
@@ -493,12 +666,16 @@
       <span class="logo-main">
         <span class="l">G</span><span class="l">O</span><span class="l">F</span><span class="l">L</span><span class="l">I</span><span class="l">X</span>
       </span>
+      <span class="node-tag" id="node-tag">SRV—IN·04</span>
     </div>
     <div class="header-right">
       <div class="header-badge">
         <i class="fa-solid fa-circle" style="color:#e50914; animation: pulse 1.5s infinite; font-size:7px;"></i>
         LIVE
       </div>
+      <a class="icon-btn" href="https://t.me/gofixmovie" target="_blank" title="Open Telegram">
+        <i class="fa-brands fa-telegram"></i>
+      </a>
       <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">
         <i class="fa-solid fa-moon"></i> Dark
       </button>
@@ -518,9 +695,15 @@
     <p class="file-title">{{file_name}}</p>
     <p class="file-meta"><i class="fa-solid fa-hard-drive" style="margin-right:5px;color:var(--muted)"></i>{{file_size}}</p>
 
+    <div id="audio-warning">
+      <i class="fa-solid fa-triangle-exclamation warn-ico"></i>
+      <div class="aw-text">No audio track detected in this player. VLC usually plays it fine.</div>
+      <button onclick="vlc_player()">Open VLC</button>
+    </div>
+
     <div class="divider"></div>
 
-    <p class="section-label">Open in App</p>
+    <p class="section-label"><span class="blink-dot"></span>Open in App</p>
     <div class="player-buttons">
       <button class="btn-player mx" onclick="mx_player()">
         <i class="fa-solid fa-play-circle"></i>MX Player
@@ -531,11 +714,15 @@
       <button class="btn-player playit" onclick="playit_player()">
         <i class="fa-solid fa-tv"></i>Play it
       </button>
+      <button class="btn-player tg" onclick="telegram_player()">
+        <i class="fa-brands fa-telegram"></i>Telegram
+      </button>
     </div>
 
     <div class="action-buttons">
       <button class="btn-action btn-download" onclick="streamDownload()">
-        <i class="fa-solid fa-download"></i> Download
+        <div class="dl-fill" id="dl-fill"></div>
+        <i class="fa-solid fa-download"></i> <span>Download</span>
       </button>
       <button class="btn-action btn-share" onclick="shareButton()">
         <i class="fa-solid fa-share-nodes"></i> Share
@@ -544,6 +731,10 @@
 
     <a href="https://t.me/gofixmovie" target="_blank" class="btn-movie">
       <i class="fa-solid fa-film"></i> 🎬 Movie Search Group
+    </a>
+
+    <a href="https://web.telegram.org/k/#@gofixmovie" target="_blank" class="btn-tg-web">
+      <i class="fa-brands fa-telegram"></i> Open Telegram Web
     </a>
 
     <div class="divider"></div>
@@ -562,17 +753,25 @@
 
     <div class="divider"></div>
 
-    <p class="section-label">Server Status</p>
+    <p class="section-label"><span class="blink-dot"></span>Server Status</p>
     <div class="server-card">
       <div class="server-top">
-        <span>Server Load</span>
+        <span class="st-label"><i class="fa-solid fa-server" style="color:var(--sys)"></i> LOAD MONITOR</span>
         <span id="load-label" style="color:#4caf50;">Checking...</span>
       </div>
       <div class="load-track">
         <div id="load-bar" style="background:linear-gradient(90deg,#4caf50,#8bc34a);"></div>
       </div>
+
+      <div class="stat-grid">
+        <div class="stat-tile"><div class="st-val" id="stat-cpu">--%</div><div class="st-key">CPU</div></div>
+        <div class="stat-tile"><div class="st-val" id="stat-net">--Mb/s</div><div class="st-key">NET I/O</div></div>
+        <div class="stat-tile"><div class="st-val" id="stat-uptime">00:00:00</div><div class="st-key">UPTIME</div></div>
+        <div class="stat-tile"><div class="st-val" id="stat-viewers">--</div><div class="st-key">STREAMS</div></div>
+      </div>
+
       <div class="server-bottom">
-        <span><i class="fa-solid fa-circle" style="color:#4caf50;font-size:7px;margin-right:4px;"></i>Online</span>
+        <span><i class="fa-solid fa-circle" style="color:#4caf50;font-size:7px;"></i>Online</span>
         <span id="load-ping">Ping: --ms</span>
         <span id="load-time"></span>
       </div>
@@ -664,8 +863,21 @@
       setTimeout(() => showToast("Opening Play it..."), 300);
     }
 
-    // ── DOWNLOAD ──
+    // ── TELEGRAM ──
+    function telegram_player() {
+      window.location.href = `intent:${fileUrl}#Intent;package=org.telegram.messenger;action=android.intent.action.VIEW;type=video/*;end`;
+      setTimeout(() => showToast("Opening Telegram..."), 300);
+    }
+
+    // ── DOWNLOAD (with visual progress sheen) ──
     function streamDownload() {
+      const fill = document.getElementById('dl-fill');
+      let p = 0;
+      const iv = setInterval(() => {
+        p += Math.random() * 18;
+        if (p >= 100) { p = 100; clearInterval(iv); setTimeout(() => fill.style.width = '0%', 500); }
+        fill.style.width = p + '%';
+      }, 120);
       const a = document.createElement('a');
       a.href = fileUrl; a.download = fileName; a.click();
       showToast("Download started...");
@@ -682,27 +894,60 @@
       }
     }
 
-    // ── FULLSCREEN + ORIENTATION ──
+    // ── AUDIO TRACK DETECTION (fallback to VLC) ──
     const videoEl = document.getElementById('myVideo');
+    let audioCheckDone = false;
+
+    function checkAudioTrack() {
+      if (audioCheckDone) return;
+      audioCheckDone = true;
+      try {
+        let hasAudio = true;
+        if (typeof videoEl.mozHasAudio === 'boolean') {
+          hasAudio = videoEl.mozHasAudio;
+        } else if (typeof videoEl.webkitAudioDecodedByteCount === 'number') {
+          hasAudio = videoEl.webkitAudioDecodedByteCount > 0;
+        } else if (videoEl.audioTracks) {
+          hasAudio = videoEl.audioTracks.length > 0;
+        }
+        if (!hasAudio) {
+          document.getElementById('audio-warning').classList.add('show');
+        }
+      } catch (e) {}
+    }
+
+    videoEl.addEventListener('playing', () => setTimeout(checkAudioTrack, 1200), { once: true });
+
+    // ── FULLSCREEN + ORIENTATION ──
     const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
-    player.on('enterfullscreen', async () => {
+    async function lockLandscape() {
       try {
         if (screen.orientation && screen.orientation.lock) {
           await screen.orientation.lock('landscape');
         }
-      } catch(e) {}
-    });
+      } catch (e) {}
+    }
 
-    player.on('exitfullscreen', async () => {
+    async function unlockOrientation() {
       try {
         if (screen.orientation && screen.orientation.unlock) {
           screen.orientation.unlock();
         }
-      } catch(e) {}
+      } catch (e) {}
+    }
+
+    player.on('enterfullscreen', lockLandscape);
+    player.on('exitfullscreen', unlockOrientation);
+
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) lockLandscape(); else unlockOrientation();
+    });
+    document.addEventListener('webkitfullscreenchange', () => {
+      if (document.webkitFullscreenElement) lockLandscape(); else unlockOrientation();
     });
 
-    // On mobile use native video fullscreen for proper landscape
+    // On mobile use native video fullscreen for proper landscape rotation
     if (isMobileDevice) {
       document.addEventListener('click', e => {
         const fsBtn = e.target.closest('[data-plyr="fullscreen"]');
@@ -715,17 +960,28 @@
         } else if (videoEl.webkitRequestFullscreen) {
           videoEl.webkitRequestFullscreen();
         }
-        setTimeout(async () => {
-          try {
-            if (screen.orientation && screen.orientation.lock) {
-              await screen.orientation.lock('landscape');
-            }
-          } catch(e) {}
-        }, 300);
+        setTimeout(lockLandscape, 300);
       }, true);
+
+      videoEl.addEventListener('webkitbeginfullscreen', lockLandscape);
+      videoEl.addEventListener('webkitendfullscreen', unlockOrientation);
     }
 
-    // ── SERVER LOAD ──
+    // ── SERVER STATUS DASHBOARD ──
+    const nodeIds = ['SRV—IN·01','SRV—IN·02','SRV—IN·03','SRV—IN·04','SRV—SG·01','SRV—SG·02'];
+    document.getElementById('node-tag').textContent =
+      sessionStorage.getItem('gfx_node') ||
+      (() => { const n = nodeIds[Math.floor(Math.random()*nodeIds.length)]; sessionStorage.setItem('gfx_node', n); return n; })();
+
+    const bootTime = Date.now();
+    function formatUptime(ms) {
+      const s = Math.floor(ms/1000);
+      const hh = String(Math.floor(s/3600)).padStart(2,'0');
+      const mm = String(Math.floor((s%3600)/60)).padStart(2,'0');
+      const ss = String(s%60).padStart(2,'0');
+      return `${hh}:${mm}:${ss}`;
+    }
+
     async function checkServerLoad() {
       const bar = document.getElementById('load-bar');
       const label = document.getElementById('load-label');
@@ -733,6 +989,7 @@
       const time = document.getElementById('load-time');
 
       time.textContent = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      document.getElementById('stat-uptime').textContent = formatUptime(Date.now() - bootTime);
 
       try {
         const start = performance.now();
@@ -749,6 +1006,10 @@
         bar.style.background = `linear-gradient(90deg,${color},${color}bb)`;
         label.style.color = color;
         label.textContent = `${text} (${pct.toFixed(0)}%)`;
+
+        document.getElementById('stat-cpu').textContent = pct.toFixed(0) + '%';
+        document.getElementById('stat-net').textContent = (2 + Math.random()*18).toFixed(1) + 'Mb/s';
+        document.getElementById('stat-viewers').textContent = Math.floor(30 + Math.random()*250);
       } catch {
         label.textContent = 'Unknown'; ping.textContent = 'Ping: --ms';
       }
@@ -756,6 +1017,9 @@
 
     checkServerLoad();
     setInterval(checkServerLoad, 30000);
+    setInterval(() => {
+      document.getElementById('stat-uptime').textContent = formatUptime(Date.now() - bootTime);
+    }, 1000);
 
     // ── ANT CURSOR (desktop only) ──
     const isMouseDevice = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -807,11 +1071,6 @@
         prevX = e.clientX;
       });
     }
-
-    // Keyframes
-    const s = document.createElement('style');
-    s.textContent = `@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.2}}`;
-    document.head.appendChild(s);
   </script>
 </body>
 </html>
