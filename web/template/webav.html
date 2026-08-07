@@ -217,17 +217,6 @@
       position: relative;
     }
 
-    .player-section::after {
-      content: '';
-      position: absolute;
-      left: 0; right: 0; bottom: -1px;
-      height: 3px;
-      background: linear-gradient(90deg, var(--red), var(--sys), var(--cyan), var(--red));
-      background-size: 300% 100%;
-      animation: gradientMove 4s linear infinite;
-      z-index: 2;
-    }
-    @keyframes gradientMove { 0% { background-position: 0% 0; } 100% { background-position: 300% 0; } }
 
     .plyr {
       --plyr-color-main: #e50914;
@@ -380,7 +369,7 @@
     .btn-player.mx   i { color: #ff6b35; }
     .btn-player.vlc  i { color: #f08000; }
     .btn-player.playit i { color: #00c6ff; }
-    .btn-player.tg   i { color: #29b6f6; }
+    .btn-player.pip  i { color: #ba68c8; }
 
     @media (max-width: 420px) {
       .player-buttons { grid-template-columns: repeat(2, 1fr); }
@@ -464,6 +453,14 @@
       -webkit-tap-highlight-color: transparent;
     }
     .btn-tg-web:hover { color: #a6ddff; transform: translateY(-2px); }
+
+    .referral-img {
+      width: 22px;
+      height: 22px;
+      object-fit: cover;
+      border-radius: 5px;
+      flex-shrink: 0;
+    }
 
     /* ── INFO CARD ── */
     .info-card {
@@ -673,9 +670,6 @@
         <i class="fa-solid fa-circle" style="color:#e50914; animation: pulse 1.5s infinite; font-size:7px;"></i>
         LIVE
       </div>
-      <a class="icon-btn" href="https://t.me/gofixmovie" target="_blank" title="Open Telegram">
-        <i class="fa-brands fa-telegram"></i>
-      </a>
       <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">
         <i class="fa-solid fa-moon"></i> Dark
       </button>
@@ -714,8 +708,8 @@
       <button class="btn-player playit" onclick="playit_player()">
         <i class="fa-solid fa-tv"></i>Play it
       </button>
-      <button class="btn-player tg" onclick="telegram_player()">
-        <i class="fa-brands fa-telegram"></i>Telegram
+      <button class="btn-player pip" onclick="pip_player()">
+        <i class="fa-solid fa-clone"></i>PiP Mode
       </button>
     </div>
 
@@ -733,8 +727,9 @@
       <i class="fa-solid fa-film"></i> 🎬 Movie Search Group
     </a>
 
-    <a href="https://web.telegram.org/k/#@gofixmovie" target="_blank" class="btn-tg-web">
-      <i class="fa-brands fa-telegram"></i> Open Telegram Web
+    <a href="https://t.me/gofixmovie" target="_blank" class="btn-tg-web">
+      <img src="https://i.ibb.co/Z6F9WZL9/1000489714.png" alt="Referral" class="referral-img" />
+      <span>Watch with a different, amazing player</span>
     </a>
 
     <div class="divider"></div>
@@ -863,10 +858,21 @@
       setTimeout(() => showToast("Opening Play it..."), 300);
     }
 
-    // ── TELEGRAM ──
-    function telegram_player() {
-      window.location.href = `intent:${fileUrl}#Intent;package=org.telegram.messenger;action=android.intent.action.VIEW;type=video/*;end`;
-      setTimeout(() => showToast("Opening Telegram..."), 300);
+    // ── PICTURE-IN-PICTURE ──
+    async function pip_player() {
+      try {
+        if (document.pictureInPictureElement) {
+          await document.exitPictureInPicture();
+          showToast("Exited PiP mode");
+        } else if (document.pictureInPictureEnabled) {
+          await videoEl.requestPictureInPicture();
+          showToast("PiP mode enabled");
+        } else {
+          showToast("PiP not supported on this device");
+        }
+      } catch (e) {
+        showToast("Could not start PiP mode");
+      }
     }
 
     // ── DOWNLOAD (with visual progress sheen) ──
