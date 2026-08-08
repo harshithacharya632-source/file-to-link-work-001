@@ -453,6 +453,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     .btn-tg-web:hover { color: #a6ddff; transform: translateY(-2px); }
+    button.btn-tg-web { font-family: inherit; cursor: pointer; }
 
     .referral-img {
       width: 22px;
@@ -687,7 +688,12 @@
   <div class="content">
 
     <p class="file-title">{{file_name}}</p>
-    <p class="file-meta"><i class="fa-solid fa-hard-drive" style="margin-right:5px;color:var(--muted)"></i>{{file_size}}</p>
+    <p class="file-meta">
+      <i class="fa-solid fa-hard-drive" style="margin-right:5px;color:var(--muted)"></i>{{file_size}}
+      <span id="watch-progress" class="watch-progress" style="display:none;">
+        <i class="fa-solid fa-eye" style="margin:0 5px 0 10px;color:var(--muted)"></i><span id="watch-progress-pct">0%</span> watched
+      </span>
+    </p>
 
     <div id="audio-warning">
       <i class="fa-solid fa-triangle-exclamation warn-ico"></i>
@@ -727,10 +733,10 @@
       <i class="fa-solid fa-film"></i> 🎬 Movie Search Group
     </a>
 
-    <a href="https://t.me/gofixmovie" target="_blank" class="btn-tg-web">
+    <button type="button" onclick="copyVlcLink()" class="btn-tg-web">
       <img src="https://i.ibb.co/Z6F9WZL9/1000489714.png" alt="Referral" class="referral-img" />
-      <span>Watch with a different, amazing player</span>
-    </a>
+      <span>Copy VLC Link (for PC/Laptop)</span>
+    </button>
 
     <div class="divider"></div>
 
@@ -807,6 +813,50 @@
     const fileUrl  = "{{file_url}}";
     const fileName = "{{file_name}}";
 
+    // ── TELEGRAM IN-APP BROWSER DETECTION ──
+    // Telegram's WebView (mobile app + web.telegram.org) blocks custom
+    // intent:// / package launches for security, so app-open buttons
+    // silently fail there. We detect it and fall back to copy-link + toast.
+    const isTelegramWebView = !!window.TelegramWebviewProxy ||
+      !!window.TelegramWebviewProxyProto ||
+      /\bTelegram\b/i.test(navigator.userAgent);
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text);
+      }
+      // Fallback for older/blocked clipboard API contexts (e.g. some in-app browsers)
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      return Promise.resolve();
+    }
+
+    function openOrCopy(intentUrl, appLabel) {
+      if (isTelegramWebView) {
+        copyToClipboard(fileUrl).then(() => {
+          showToast(`Telegram browser blocks app links. Link copied — paste it into ${appLabel}.`);
+        });
+        return;
+      }
+      window.location.href = intentUrl;
+      setTimeout(() => showToast(`Opening ${appLabel}...`), 300);
+    }
+
+    // ── COPY VLC LINK (for VLC on PC/laptop via Open Network Stream) ──
+    function copyVlcLink() {
+      copyToClipboard(fileUrl).then(() => {
+        showToast("Link copied! Open VLC on PC → Media → Open Network Stream → Paste");
+      }).catch(() => {
+        showToast("Couldn't copy — long-press to copy the link manually");
+      });
+    }
+
     // ── THEME ──
     let isDark = true;
     function toggleTheme() {
@@ -829,6 +879,10 @@
     // ── MX PLAYER ──
     function mx_player() {
       const intentUrl = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent(fileName)};end`;
+      if (isTelegramWebView) {
+        openOrCopy(intentUrl, "MX Player");
+        return;
+      }
       const start = Date.now();
       window.location.href = intentUrl;
       setTimeout(() => {
@@ -848,14 +902,14 @@
 
     // ── VLC ──
     function vlc_player() {
-      window.location.href = `intent:${fileUrl}#Intent;package=org.videolan.vlc;action=android.intent.action.VIEW;type=video/*;end`;
-      setTimeout(() => showToast("Opening VLC..."), 300);
+      const intentUrl = `intent:${fileUrl}#Intent;package=org.videolan.vlc;action=android.intent.action.VIEW;type=video/*;end`;
+      openOrCopy(intentUrl, "VLC");
     }
 
     // ── PLAY IT ──
     function playit_player() {
-      window.location.href = `intent:${fileUrl}#Intent;package=com.playit.videoplayer;action=android.intent.action.VIEW;type=video/*;end`;
-      setTimeout(() => showToast("Opening Play it..."), 300);
+      const intentUrl = `intent:${fileUrl}#Intent;package=com.playit.videoplayer;action=android.intent.action.VIEW;type=video/*;end`;
+      openOrCopy(intentUrl, "Play it");
     }
 
     // ── PICTURE-IN-PICTURE ──
@@ -903,6 +957,26 @@
     // ── AUDIO TRACK DETECTION (fallback to VLC) ──
     const videoEl = document.getElementById('myVideo');
     let audioCheckDone = false;
+
+    // ── WATCHED PERCENTAGE ──
+    const watchProgressEl    = document.getElementById('watch-progress');
+    const watchProgressPctEl = document.getElementById('watch-progress-pct');
+    let lastShownPct = -1;
+
+    videoEl.addEventListener('timeupdate', () => {
+      if (!videoEl.duration || isNaN(videoEl.duration)) return;
+      const pct = Math.min(100, Math.floor((videoEl.currentTime / videoEl.duration) * 100));
+      if (pct !== lastShownPct) {
+        lastShownPct = pct;
+        watchProgressPctEl.textContent = pct + '%';
+        watchProgressEl.style.display = 'inline';
+      }
+    });
+
+    videoEl.addEventListener('ended', () => {
+      watchProgressPctEl.textContent = '100%';
+    });
+
 
     function checkAudioTrack() {
       if (audioCheckDone) return;
