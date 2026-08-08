@@ -16,7 +16,8 @@
   <meta name="twitter:description" content="Watch {{file_name}} instantly on GOFLIX.">
   <meta name="twitter:image" content="https://i.ibb.co/Z6F9WZL9/1000489714.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css"
+        onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css';">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -333,14 +334,14 @@
     .controls-bar {
       position: absolute; left: 0; right: 0; bottom: 0;
       background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
-      padding: 20px 10px 8px;
+      padding: 24px 12px 12px;
       z-index: 10;
       transition: opacity 0.25s;
       opacity: 1;
     }
     .controls-bar.hide { opacity: 0; pointer-events: none; }
 
-    .seek-row { padding: 0 2px 4px; }
+    .seek-row { padding: 0 2px 12px; }
     .seek-bar {
       -webkit-appearance: none; appearance: none;
       width: 100%; height: 4px; border-radius: 4px;
@@ -359,7 +360,7 @@
     }
     .seek-bar::-moz-range-progress { background: var(--red); height: 4px; border-radius: 4px; }
 
-    .controls-row { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+    .controls-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
     .ctrl-btn {
       background: none; border: none; color: #fff; font-size: 15px;
       width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
@@ -382,6 +383,15 @@
       width: 10px; height: 10px; border-radius: 50%; background: #fff; cursor: pointer;
     }
     .vol-slider::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; border: none; background: #fff; cursor: pointer; }
+
+    .ctrl-btn .fbk, .center-play-btn .fbk {
+      display: none; font-size: 9px; font-weight: 700; color: #fff; letter-spacing: .3px;
+    }
+    body.no-icon-font .ctrl-btn i, body.no-icon-font .center-play-btn i,
+    body.no-icon-font .gest-indicator i, body.no-icon-font .seek-flash i { display: none; }
+    body.no-icon-font .ctrl-btn .fbk, body.no-icon-font .center-play-btn .fbk { display: block; }
+    body.no-icon-font .center-play-btn { width: auto; height: auto; padding: 10px 16px; border-radius: 8px; }
+    body.no-icon-font .gest-indicator, body.no-icon-font .seek-flash { font-family: var(--mono); }
 
     @media (max-width: 380px) {
       .vol-slider { display: none; }
@@ -416,6 +426,12 @@
       white-space: nowrap;
       cursor: pointer;
     }
+    [data-theme="light"] #audio-warning {
+      background: rgba(240,128,0,0.12);
+      border: 1px solid rgba(240,128,0,0.4);
+      color: #9a5300;
+    }
+    [data-theme="light"] #audio-warning .warn-ico { color: #9a5300; }
 
     /* ── CONTENT ── */
     .content {
@@ -436,7 +452,23 @@
       overflow-wrap: break-word;
     }
 
-    .file-meta { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+    .file-meta {
+      display: flex; align-items: center; flex-wrap: wrap;
+      gap: 8px; row-gap: 6px;
+      font-size: 12px; color: var(--muted); margin-bottom: 16px;
+    }
+    .watch-progress {
+      display: inline-flex; align-items: center;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 3px 9px 3px 7px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .watch-progress i { color: var(--sys) !important; margin: 0 5px 0 0 !important; font-size: 10px; }
 
     .divider {
       height: 1px;
@@ -812,7 +844,7 @@
       <div class="gesture-zone right" id="gzRight"></div>
     </div>
 
-    <div class="center-play-btn" id="centerPlayBtn"><i class="fa-solid fa-play"></i></div>
+    <div class="center-play-btn" id="centerPlayBtn"><i class="fa-solid fa-play"></i><span class="fbk">Play</span></div>
     <div class="buf-spinner" id="bufSpinner"><i class="fa-solid fa-spinner fa-spin"></i></div>
 
     <div class="gest-indicator left" id="brightInd">
@@ -832,13 +864,13 @@
         <input type="range" id="seekBar" class="seek-bar" min="0" max="100" value="0" step="0.1">
       </div>
       <div class="controls-row">
-        <button class="ctrl-btn" id="playPauseBtn"><i class="fa-solid fa-play"></i></button>
+        <button class="ctrl-btn" id="playPauseBtn"><i class="fa-solid fa-play"></i><span class="fbk">Play</span></button>
         <span class="time-label" id="timeLabel">0:00 / 0:00</span>
         <div class="ctrl-spacer"></div>
-        <button class="ctrl-btn" id="volBtn"><i class="fa-solid fa-volume-high"></i></button>
+        <button class="ctrl-btn" id="volBtn"><i class="fa-solid fa-volume-high"></i><span class="fbk">Vol</span></button>
         <input type="range" id="volSlider" class="vol-slider" min="0" max="1" value="1" step="0.01">
-        <button class="ctrl-btn" id="pipBtn" title="Picture in Picture"><i class="fa-regular fa-clone"></i></button>
-        <button class="ctrl-btn" id="fsBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+        <button class="ctrl-btn" id="pipBtn" title="Picture in Picture"><i class="fa-regular fa-clone"></i><span class="fbk">PiP</span></button>
+        <button class="ctrl-btn" id="fsBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i><span class="fbk">Full</span></button>
       </div>
     </div>
 
@@ -854,7 +886,7 @@
     <p class="file-meta">
       <i class="fa-solid fa-hard-drive" style="margin-right:5px;color:var(--muted)"></i>{{file_size}}
       <span id="watch-progress" class="watch-progress" style="display:none;">
-        <i class="fa-solid fa-eye" style="margin:0 5px 0 10px;color:var(--muted)"></i><span id="watch-progress-pct">0%</span> watched
+        <i class="fa-solid fa-eye"></i><span id="watch-progress-pct">0%</span>&nbsp;watched
       </span>
     </p>
 
@@ -950,6 +982,25 @@
   <div id="toast"></div>
 
   <script>
+    // ── ICON FONT FALLBACK ──
+    // If Font Awesome fails to load entirely (both CDNs blocked), the
+    // buttons render as empty boxes. Detect that and swap in plain-text
+    // labels so controls stay usable either way.
+    function checkIconFontLoaded() {
+      const test = document.createElement('i');
+      test.className = 'fa-solid fa-play';
+      test.style.cssText = 'position:absolute;visibility:hidden;font-size:40px;';
+      document.body.appendChild(test);
+      const family = getComputedStyle(test).fontFamily || '';
+      document.body.removeChild(test);
+      return /font awesome/i.test(family);
+    }
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (!checkIconFontLoaded()) document.body.classList.add('no-icon-font');
+      }, 1200);
+    });
+
     const video   = document.getElementById('myVideo');
     const wrap    = document.getElementById('playerWrap');
     const fileUrl  = "{{file_url}}";
@@ -1078,18 +1129,16 @@
     }
 
     // ── SHARE ──
+    // Copy the link and show the toast right away instead of waiting on
+    // the native share sheet's promise (which only resolves once the
+    // person closes it, making the toast feel delayed by several
+    // seconds). The native share sheet still opens for convenience.
     function shareButton() {
+      copyToClipboard(window.location.href)
+        .then(() => showToast("Link copied!"))
+        .catch(() => showToast("Copy URL from address bar"));
       if (navigator.share) {
-        navigator.share({ title: fileName, url: window.location.href }).catch((err) => {
-          if (err && err.name === 'AbortError') return;
-          copyToClipboard(window.location.href)
-            .then(() => showToast("Link copied!"))
-            .catch(() => showToast("Couldn't share — copy the link from the address bar"));
-        });
-      } else {
-        copyToClipboard(window.location.href)
-          .then(() => showToast("Link copied!"))
-          .catch(() => showToast("Copy URL from address bar"));
+        navigator.share({ title: fileName, url: window.location.href }).catch(() => {});
       }
     }
 
@@ -1188,20 +1237,29 @@
 
     function updatePlayIcon() {
       const paused = video.paused;
-      playPauseBtn.innerHTML = paused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
-      centerPlayBtn.innerHTML = paused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
-      centerPlayBtn.classList.toggle('show', paused);
+      const buffering = bufSpinner.classList.contains('show');
+      const label = paused ? 'Play' : 'Pause';
+      const icon = paused ? 'fa-play' : 'fa-pause';
+      playPauseBtn.innerHTML = `<i class="fa-solid ${icon}"></i><span class="fbk">${label}</span>`;
+      centerPlayBtn.innerHTML = `<i class="fa-solid ${icon}"></i><span class="fbk">${label}</span>`;
+      // Never show the big center icon at the same time as the buffering
+      // spinner — they sit in the same spot and were overlapping.
+      centerPlayBtn.classList.toggle('show', paused && !buffering);
     }
 
     function togglePlay() {
       if (video.paused) video.play().catch(() => {}); else video.pause();
     }
 
+    function setBuffering(on) {
+      bufSpinner.classList.toggle('show', on);
+      updatePlayIcon(); // re-evaluate center icon so it never overlaps the spinner
+    }
     video.addEventListener('play', () => { updatePlayIcon(); scheduleAutoHide(); });
     video.addEventListener('pause', () => { updatePlayIcon(); showControls(); });
-    video.addEventListener('waiting', () => bufSpinner.classList.add('show'));
-    video.addEventListener('playing', () => bufSpinner.classList.remove('show'));
-    video.addEventListener('canplay', () => bufSpinner.classList.remove('show'));
+    video.addEventListener('waiting', () => setBuffering(true));
+    video.addEventListener('playing', () => setBuffering(false));
+    video.addEventListener('canplay', () => setBuffering(false));
 
     let seeking = false;
     function updateSeekUI() {
@@ -1230,7 +1288,7 @@
       video.muted = v === 0;
       volSlider.value = v;
       const icon = v === 0 ? 'fa-volume-xmark' : (v < 0.5 ? 'fa-volume-low' : 'fa-volume-high');
-      volBtn.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+      volBtn.innerHTML = `<i class="fa-solid ${icon}"></i><span class="fbk">${v === 0 ? 'Mute' : 'Vol'}</span>`;
       volIndIcon.className = 'fa-solid ' + icon;
     }
     volSlider.addEventListener('input', () => setVolume(parseFloat(volSlider.value)));
@@ -1369,7 +1427,14 @@
       lastTapTime = now; lastTapX = x;
       tapTimer = setTimeout(() => {
         tapTimer = null;
-        toggleControlsVisibility();
+        // Single tap in the center zone toggles play/pause directly —
+        // previously this only toggled the controls bar, which made the
+        // play button look unresponsive since it needed a double-tap.
+        if (relX >= 0.35 && relX <= 0.65) {
+          togglePlay();
+        } else {
+          toggleControlsVisibility();
+        }
       }, 320);
     }
 
@@ -1416,10 +1481,27 @@
       else if (video.webkitExitFullscreen) video.webkitExitFullscreen();
     }
 
+    // Match device orientation to the video's own orientation on entering
+    // fullscreen (landscape video -> landscape lock, portrait/vertical
+    // video -> portrait lock), but never re-lock afterwards — so the
+    // person can still freely rotate their phone once inside fullscreen.
+    async function autoOrientFullscreen() {
+      try {
+        if (!screen.orientation || !screen.orientation.lock) return;
+        const w = video.videoWidth, h = video.videoHeight;
+        const wantLandscape = w && h ? w >= h : true;
+        await screen.orientation.lock(wantLandscape ? 'landscape' : 'portrait');
+      } catch (e) {}
+    }
+    function unlockOrientation() {
+      try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+    }
+
     function enterPseudoFullscreen() {
       wrap.classList.add('pseudo-fs');
       document.body.style.overflow = 'hidden';
       updateFsExitVisibility();
+      autoOrientFullscreen();
       history.pushState({ pseudoFs: true }, '');
     }
 
@@ -1432,6 +1514,7 @@
       wrap.classList.remove('pseudo-fs');
       document.body.style.overflow = '';
       updateFsExitVisibility();
+      unlockOrientation();
     }
 
     window.addEventListener('popstate', () => {
@@ -1449,6 +1532,7 @@
       const attempted = enterRealFullscreen();
       setTimeout(() => {
         if (!isRealFullscreenActive()) enterPseudoFullscreen();
+        else autoOrientFullscreen();
       }, attempted ? 350 : 0);
     }
 
@@ -1456,11 +1540,27 @@
 
     function updateFsIcon() {
       fsBtn.innerHTML = isRealFullscreenActive()
-        ? '<i class="fa-solid fa-compress"></i>'
-        : '<i class="fa-solid fa-expand"></i>';
+        ? '<i class="fa-solid fa-compress"></i><span class="fbk">Exit</span>'
+        : '<i class="fa-solid fa-expand"></i><span class="fbk">Full</span>';
     }
-    document.addEventListener('fullscreenchange', updateFsIcon);
+    document.addEventListener('fullscreenchange', () => {
+      updateFsIcon();
+      if (!isRealFullscreenActive()) unlockOrientation();
+    });
     document.addEventListener('webkitfullscreenchange', updateFsIcon);
+
+    // Some mobile WebViews (notably Telegram's in-app browser) don't
+    // recompute 100vh correctly right after a rotation, which is why
+    // pseudo-fullscreen looked stuck in portrait — force a reflow on
+    // orientation/resize so the player fills the new viewport.
+    function refreshFsLayout() {
+      if (!wrap.classList.contains('pseudo-fs')) return;
+      wrap.style.display = 'none';
+      void wrap.offsetHeight;
+      wrap.style.display = '';
+    }
+    window.addEventListener('orientationchange', () => setTimeout(refreshFsLayout, 60));
+    window.addEventListener('resize', () => { if (wrap.classList.contains('pseudo-fs')) refreshFsLayout(); });
 
     // Init
     updatePlayIcon();
