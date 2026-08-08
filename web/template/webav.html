@@ -912,31 +912,9 @@
     });
 
     // ── VLC ──
-    // NOTE: intent:// links only get resolved by Chrome itself — Telegram's
-    // in-app browser (and most embedded WebViews) never handle them, no
-    // matter what the page does. The vlc:// custom scheme is registered
-    // directly by the VLC app though, so it has a real chance of being
-    // picked up even inside Telegram. We watch for the page being hidden
-    // (a sign VLC actually opened) and only fall back to copy-link if
-    // nothing happened after a short wait.
     function vlc_player() {
-      const scheme = `vlc://${fileUrl}`;
-      let appOpened = false;
-      function onVisChange() { if (document.hidden) appOpened = true; }
-      document.addEventListener('visibilitychange', onVisChange);
-
-      window.location.href = scheme;
-
-      setTimeout(() => {
-        document.removeEventListener('visibilitychange', onVisChange);
-        if (appOpened) {
-          showToast("Opening VLC...");
-        } else {
-          copyToClipboard(fileUrl).then(() => {
-            showToast("VLC didn't open — link copied, paste it into VLC manually");
-          });
-        }
-      }, 1200);
+      const intentUrl = `intent:${fileUrl}#Intent;package=org.videolan.vlc;action=android.intent.action.VIEW;type=video/*;end`;
+      openOrCopy(intentUrl, "VLC");
     }
 
     // ── PLAY IT ──
@@ -1060,18 +1038,23 @@
       if (document.webkitFullscreenElement) lockLandscape(); else unlockOrientation();
     });
 
-    // On mobile use native video fullscreen for proper landscape rotation
-    if (isMobileDevice) {
+    // Only iOS lacks Fullscreen API support on arbitrary elements, so it's
+    // the one platform that genuinely needs native <video> fullscreen.
+    // Everywhere else (Android included) should use Plyr's own fullscreen,
+    // which keeps the full control bar (progress, volume, mute, time)
+    // visible — forcing native video fullscreen on Android was stripping
+    // all of that out, leaving a bare video with no controls at all.
+    const isIOSDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent) && !window.MSStream;
+
+    if (isIOSDevice) {
       document.addEventListener('click', e => {
         const fsBtn = e.target.closest('[data-plyr="fullscreen"]');
         if (!fsBtn) return;
         e.stopPropagation(); e.preventDefault();
-        if (videoEl.requestFullscreen) {
-          videoEl.requestFullscreen();
-        } else if (videoEl.webkitEnterFullscreen) {
+        if (videoEl.webkitEnterFullscreen) {
           videoEl.webkitEnterFullscreen();
-        } else if (videoEl.webkitRequestFullscreen) {
-          videoEl.webkitRequestFullscreen();
+        } else if (videoEl.requestFullscreen) {
+          videoEl.requestFullscreen();
         }
         setTimeout(lockLandscape, 300);
       }, true);
