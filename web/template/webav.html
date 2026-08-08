@@ -18,7 +18,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -90,12 +89,7 @@
     }
     @keyframes scanline { 0% { top: -2%; } 100% { top: 102%; } }
 
-    header, .player-section, .content, footer, #toast, #mx-modal { position: relative; z-index: 1; }
-
-    /* Ant cursor desktop only */
-    @media (hover: hover) and (pointer: fine) {
-      *, *::before, *::after { cursor: none !important; }
-    }
+    header, .content, footer, #toast, #mx-modal { position: relative; z-index: 1; }
 
     /* ── HEADER ── */
     header {
@@ -131,7 +125,6 @@
       font-size: 28px;
       letter-spacing: 4px;
       display: flex;
-      filter: none;
     }
 
     .logo-main .l {
@@ -188,22 +181,6 @@
       white-space: nowrap;
     }
 
-    .icon-btn {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text);
-      font-size: 13px;
-      transition: all 0.2s;
-      text-decoration: none;
-    }
-    .icon-btn:hover { opacity: 0.8; border-color: var(--sys); color: var(--sys); }
-
     .theme-btn {
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -217,88 +194,67 @@
       gap: 4px;
       transition: all 0.2s;
       white-space: nowrap;
+      cursor: pointer;
     }
 
     .theme-btn:hover { opacity: 0.8; }
 
-    /* ── PLAYER ── */
-    .player-section {
+    /* ══════════════════ CUSTOM VIDEO PLAYER ══════════════════ */
+    .player-wrap {
+      position: relative;
       background: #000;
       width: 100%;
-      position: relative;
+      overflow: hidden;
+      line-height: 0;
+      touch-action: pan-y;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-
-    .plyr {
-      --plyr-color-main: #e50914;
-      --plyr-video-control-color: #fff;
-      width: 100% !important;
-      max-width: 100% !important;
+    #myVideo {
+      width: 100%;
+      display: block;
+      background: #000;
+      max-height: 80vh;
+      transition: filter 0.05s linear;
     }
 
-    .plyr__controls {
-      width: 100% !important;
-      max-width: 100% !important;
-      box-sizing: border-box !important;
-      padding: 6px 10px !important;
+    /* Real fullscreen */
+    .player-wrap:fullscreen,
+    .player-wrap:-webkit-full-screen {
+      width: 100vw; height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      background: #000;
     }
-
-    .plyr__progress {
-      width: 100% !important;
-      flex: 1 !important;
-      min-width: 0 !important;
+    .player-wrap:fullscreen #myVideo,
+    .player-wrap:-webkit-full-screen #myVideo {
+      width: 100%; height: 100%; max-height: 100vh; object-fit: contain;
     }
-
-    .plyr__volume {
-      min-width: 60px !important;
-      max-width: 80px !important;
-    }
-
-    .plyr--fullscreen-active,
-    .plyr--fullscreen-active .plyr__video-wrapper,
-    .plyr--fullscreen-active video {
-      width: 100vw !important;
-      height: 100vh !important;
-      max-height: 100vh !important;
-    }
-
     video:-webkit-full-screen { width: 100vw !important; height: 100vh !important; object-fit: contain; background: #000; }
-    video:fullscreen           { width: 100vw !important; height: 100vh !important; object-fit: contain; background: #000; }
+    video:fullscreen { width: 100vw !important; height: 100vh !important; object-fit: contain; background: #000; }
 
-    .plyr--fullscreen-active .plyr__controls {
-      position: fixed !important;
-      bottom: 0 !important;
-      left: 0 !important;
-      right: 0 !important;
-      width: 100vw !important;
-      box-sizing: border-box !important;
-      padding: 8px 12px !important;
-      z-index: 9999;
-    }
-
-    /* Pseudo-fullscreen: pure CSS, no browser Fullscreen API involved —
-       used as a fallback when the real one is silently blocked (common
-       in Telegram's in-app browser and similar embedded WebViews). */
-    .player-section.pseudo-fs {
+    /* Pseudo-fullscreen fallback (Telegram in-app browsers etc). Works
+       correctly in BOTH portrait and landscape — no forced orientation. */
+    .player-wrap.pseudo-fs {
       position: fixed !important;
       inset: 0 !important;
       width: 100vw !important;
       height: 100vh !important;
       z-index: 99998;
       background: #000;
+      display: flex; align-items: center; justify-content: center;
     }
-    .player-section.pseudo-fs .plyr,
-    .player-section.pseudo-fs video {
-      width: 100% !important;
-      height: 100% !important;
-      max-height: 100vh !important;
+    .player-wrap.pseudo-fs #myVideo {
+      width: 100% !important; height: 100% !important;
+      max-height: 100vh !important; object-fit: contain;
     }
+
     #pseudo-fs-exit {
       display: none;
       position: fixed;
       top: 14px;
       right: 14px;
-      z-index: 99999;
+      z-index: 100001;
       background: rgba(0,0,0,.65);
       color: #fff;
       border: none;
@@ -309,6 +265,128 @@
       justify-content: center;
       font-size: 15px;
       cursor: pointer;
+    }
+
+    /* Touch/gesture capture layer over the video */
+    .gesture-layer {
+      position: absolute; inset: 0;
+      display: flex;
+      z-index: 5;
+      touch-action: none;
+    }
+    .gesture-zone { flex: 1; height: 100%; }
+    .gesture-zone.center { flex: 1.3; }
+
+    .center-play-btn {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%) scale(0.85);
+      width: 58px; height: 58px; border-radius: 50%;
+      background: rgba(0,0,0,0.45);
+      border: 1.5px solid rgba(255,255,255,0.35);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 22px;
+      z-index: 6; pointer-events: none;
+      opacity: 0; transition: opacity 0.2s, transform 0.2s;
+    }
+    .center-play-btn.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+
+    .buf-spinner {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      color: #fff; font-size: 30px;
+      z-index: 6; pointer-events: none;
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .buf-spinner.show { opacity: 0.9; }
+
+    /* Brightness / volume drag indicators (fullscreen gestures) */
+    .gest-indicator {
+      position: absolute; top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.6);
+      border-radius: 14px;
+      padding: 12px 9px;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: #fff; font-size: 13px;
+      opacity: 0; pointer-events: none; transition: opacity 0.15s;
+      z-index: 20;
+    }
+    .gest-indicator.left { left: 22px; }
+    .gest-indicator.right { right: 22px; }
+    .gest-indicator.show { opacity: 1; }
+    .gest-track { width: 4px; height: 84px; background: rgba(255,255,255,0.25); border-radius: 4px; overflow: hidden; display: flex; align-items: flex-end; }
+    .gest-fill { width: 100%; background: #fff; border-radius: 4px; }
+
+    .seek-flash {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      background: rgba(0,0,0,0.55); color: #fff;
+      border-radius: 50px; padding: 9px 16px; font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+      opacity: 0; pointer-events: none; transition: opacity 0.15s;
+      z-index: 20;
+    }
+    .seek-flash.left { left: 12%; }
+    .seek-flash.right { right: 12%; }
+    .seek-flash.show { opacity: 1; }
+
+    /* Controls bar */
+    .controls-bar {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+      padding: 20px 10px 8px;
+      z-index: 10;
+      transition: opacity 0.25s;
+      opacity: 1;
+    }
+    .controls-bar.hide { opacity: 0; pointer-events: none; }
+
+    .seek-row { padding: 0 2px 4px; }
+    .seek-bar {
+      -webkit-appearance: none; appearance: none;
+      width: 100%; height: 4px; border-radius: 4px;
+      background: rgba(255,255,255,0.28);
+      outline: none; cursor: pointer;
+    }
+    .seek-bar::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 13px; height: 13px; border-radius: 50%;
+      background: var(--red); cursor: pointer;
+      box-shadow: 0 0 0 3px rgba(229,9,20,0.25);
+    }
+    .seek-bar::-moz-range-thumb {
+      width: 13px; height: 13px; border-radius: 50%; border: none;
+      background: var(--red); cursor: pointer;
+    }
+    .seek-bar::-moz-range-progress { background: var(--red); height: 4px; border-radius: 4px; }
+
+    .controls-row { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+    .ctrl-btn {
+      background: none; border: none; color: #fff; font-size: 15px;
+      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; opacity: 0.95;
+    }
+    .ctrl-btn:hover { opacity: 1; }
+    .time-label {
+      font-family: var(--mono); font-size: 10.5px; color: #fff;
+      white-space: nowrap; margin-left: 2px;
+    }
+    .ctrl-spacer { flex: 1; }
+    .vol-slider {
+      -webkit-appearance: none; appearance: none;
+      width: 56px; height: 3px; border-radius: 3px;
+      background: rgba(255,255,255,0.3); outline: none; cursor: pointer;
+      margin-right: 4px;
+    }
+    .vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 10px; height: 10px; border-radius: 50%; background: #fff; cursor: pointer;
+    }
+    .vol-slider::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; border: none; background: #fff; cursor: pointer; }
+
+    @media (max-width: 380px) {
+      .vol-slider { display: none; }
+      .ctrl-btn { width: 28px; height: 28px; font-size: 14px; }
+      .time-label { font-size: 9.5px; }
     }
 
     /* Audio fallback banner */
@@ -450,7 +528,6 @@
     .btn-share { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
     .btn-share:hover { background: var(--surface); color: var(--text); }
 
-    /* download progress sheen */
     .btn-download .dl-fill {
       position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
       background: rgba(255,255,255,0.18);
@@ -540,7 +617,7 @@
       min-width: 0;
     }
 
-    /* ── SERVER CARD (unique terminal dashboard look) ── */
+    /* ── SERVER CARD ── */
     .server-card {
       background:
         radial-gradient(circle at 100% 0%, rgba(0,229,138,0.07), transparent 60%),
@@ -640,7 +717,7 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.28s ease, transform 0.28s ease;
-      z-index: 9999;
+      z-index: 100002;
       white-space: nowrap;
       border: 1px solid #333;
       box-shadow: 0 8px 30px rgba(0,0,0,0.5);
@@ -724,10 +801,47 @@
   </header>
 
   <!-- PLAYER -->
-  <div class="player-section">
-    <video id="myVideo" playsinline>
+  <div class="player-wrap" id="playerWrap">
+    <video id="myVideo" playsinline webkit-playsinline preload="metadata">
       <source src="{{file_url}}" type="video/mp4">
     </video>
+
+    <div class="gesture-layer" id="gestureLayer">
+      <div class="gesture-zone left" id="gzLeft"></div>
+      <div class="gesture-zone center" id="gzCenter"></div>
+      <div class="gesture-zone right" id="gzRight"></div>
+    </div>
+
+    <div class="center-play-btn" id="centerPlayBtn"><i class="fa-solid fa-play"></i></div>
+    <div class="buf-spinner" id="bufSpinner"><i class="fa-solid fa-spinner fa-spin"></i></div>
+
+    <div class="gest-indicator left" id="brightInd">
+      <i class="fa-solid fa-sun"></i>
+      <div class="gest-track"><div class="gest-fill" id="brightFill"></div></div>
+    </div>
+    <div class="gest-indicator right" id="volInd">
+      <i class="fa-solid fa-volume-high" id="volIndIcon"></i>
+      <div class="gest-track"><div class="gest-fill" id="volFill"></div></div>
+    </div>
+
+    <div class="seek-flash left" id="seekFlashLeft"><i class="fa-solid fa-backward"></i><span>10s</span></div>
+    <div class="seek-flash right" id="seekFlashRight"><i class="fa-solid fa-forward"></i><span>10s</span></div>
+
+    <div class="controls-bar" id="controlsBar">
+      <div class="seek-row">
+        <input type="range" id="seekBar" class="seek-bar" min="0" max="100" value="0" step="0.1">
+      </div>
+      <div class="controls-row">
+        <button class="ctrl-btn" id="playPauseBtn"><i class="fa-solid fa-play"></i></button>
+        <span class="time-label" id="timeLabel">0:00 / 0:00</span>
+        <div class="ctrl-spacer"></div>
+        <button class="ctrl-btn" id="volBtn"><i class="fa-solid fa-volume-high"></i></button>
+        <input type="range" id="volSlider" class="vol-slider" min="0" max="1" value="1" step="0.01">
+        <button class="ctrl-btn" id="pipBtn" title="Picture in Picture"><i class="fa-regular fa-clone"></i></button>
+        <button class="ctrl-btn" id="fsBtn" title="Fullscreen"><i class="fa-solid fa-expand"></i></button>
+      </div>
+    </div>
+
     <button id="pseudo-fs-exit" onclick="exitPseudoFullscreen()" title="Exit fullscreen">
       <i class="fa-solid fa-compress"></i>
     </button>
@@ -835,30 +949,9 @@
 
   <div id="toast"></div>
 
-  <!-- MX MODAL -->
-  <div id="mx-modal">
-    <div class="mx-sheet">
-      <h3>Open with MX Player</h3>
-      <p>If MX Player is installed tap "Open Now". Otherwise install it first.</p>
-      <div class="mx-btns">
-        <a id="mx-open-btn" class="btn-mx-open"><i class="fa-solid fa-play"></i> Open Now</a>
-        <a href="https://play.google.com/store/apps/details?id=com.mxtech.videoplayer.ad" target="_blank" class="btn-mx-install">
-          <i class="fa-brands fa-google-play"></i> Install
-        </a>
-        <button class="btn-mx-cancel" onclick="closeMxModal()">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.plyr.io/3.6.12/plyr.js"></script>
   <script>
-    const player = new Plyr('#myVideo', {
-      controls: ['play-large','play','progress','current-time','duration','mute','volume','fullscreen'],
-      resetOnEnd: false,
-      keyboard: { focused: true, global: true },
-      fullscreen: { enabled: true, fallback: true, iosNative: true }
-    });
-
+    const video   = document.getElementById('myVideo');
+    const wrap    = document.getElementById('playerWrap');
     const fileUrl  = "{{file_url}}";
     const fileName = "{{file_name}}";
 
@@ -869,7 +962,6 @@
       if (navigator.clipboard && navigator.clipboard.writeText) {
         return navigator.clipboard.writeText(text);
       }
-      // Fallback for older/blocked clipboard API contexts (e.g. some in-app browsers)
       const ta = document.createElement('textarea');
       ta.value = text;
       ta.style.position = 'fixed';
@@ -881,7 +973,6 @@
       return Promise.resolve();
     }
 
-    // ── COPY VLC LINK (for VLC on PC/laptop via Open Network Stream) ──
     function copyVlcLink() {
       copyToClipboard(fileUrl).then(() => {
         showToast("Link copied! Open VLC on PC → Media → Open Network Stream → Paste");
@@ -906,19 +997,11 @@
       const t = document.getElementById('toast');
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2600);
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => t.classList.remove('show'), 2600);
     }
 
     // ── EXTERNAL PLAYER LAUNCHER ──
-    // Uses the canonical intent:// format (host WITHOUT the https:// prefix,
-    // plus an explicit scheme=https; parameter) instead of the older
-    // intent:https://... mixed form — this is the format Android's system
-    // WebView (which Telegram's in-app browser is built on) actually
-    // recognizes, so it can launch the app even inside Telegram, not just
-    // in Chrome. We still watch for the page being backgrounded and fall
-    // back to copy-link if nothing opens after a short wait, in case a
-    // specific app isn't installed or a particular WebView build still
-    // blocks it.
     function openExternalPlayer(pkg, appLabel) {
       const path = fileUrl.replace(/^https?:\/\//, '');
       const intentUrl = `intent://${path}#Intent;package=${pkg};type=video/*;scheme=https;end`;
@@ -938,10 +1021,8 @@
       }, 1200);
     }
 
-    // ── MX PLAYER ──
     function mx_player() {
       if (isIOSDevice) {
-        // No MX Player on iOS — copy the link instead.
         copyToClipboard(fileUrl).then(() => {
           showToast("MX Player isn't available on iOS — link copied instead");
         });
@@ -950,42 +1031,29 @@
       openExternalPlayer('com.mxtech.videoplayer.ad', 'MX Player');
     }
 
-    function closeMxModal() {
-      document.getElementById('mx-modal').classList.remove('open');
-    }
-
-    document.getElementById('mx-modal').addEventListener('click', function(e) {
-      if (e.target === this) closeMxModal();
-    });
-
-    // ── VLC ──
     function vlc_player() {
       if (isIOSDevice) {
-        // VLC for iOS uses its own x-callback URL scheme.
         window.location.href = 'vlc-x-callback://x-callback-url/stream?url=' + encodeURIComponent(fileUrl);
         return;
       }
       openExternalPlayer('org.videolan.vlc', 'VLC');
     }
 
-    // ── PLAY IT ──
     function playit_player() {
       if (isIOSDevice) {
-        // Outplayer is the closest iOS equivalent, uses its own scheme.
         window.location.href = 'outplayer://' + fileUrl.replace(/^https?:\/\//, '');
         return;
       }
       openExternalPlayer('com.playit.videoplayer', 'Play it');
     }
 
-    // ── PICTURE-IN-PICTURE ──
     async function pip_player() {
       try {
         if (document.pictureInPictureElement) {
           await document.exitPictureInPicture();
           showToast("Exited PiP mode");
         } else if (document.pictureInPictureEnabled) {
-          await videoEl.requestPictureInPicture();
+          await video.requestPictureInPicture();
           showToast("PiP mode enabled");
         } else {
           showToast("PiP not supported on this device");
@@ -995,7 +1063,7 @@
       }
     }
 
-    // ── DOWNLOAD (with visual progress sheen) ──
+    // ── DOWNLOAD ──
     function streamDownload() {
       const fill = document.getElementById('dl-fill');
       let p = 0;
@@ -1013,11 +1081,7 @@
     function shareButton() {
       if (navigator.share) {
         navigator.share({ title: fileName, url: window.location.href }).catch((err) => {
-          if (err && err.name === 'AbortError') return; // user cancelled — no toast needed
-          // navigator.share exists but failed anyway (common in in-app
-          // WebViews where the API is present but non-functional) —
-          // fall back to copying the link so the button always does
-          // something visible instead of silently doing nothing.
+          if (err && err.name === 'AbortError') return;
           copyToClipboard(window.location.href)
             .then(() => showToast("Link copied!"))
             .catch(() => showToast("Couldn't share — copy the link from the address bar"));
@@ -1029,191 +1093,379 @@
       }
     }
 
-    // ── AUDIO TRACK DETECTION (fallback to VLC) ──
-    const videoEl = document.getElementById('myVideo');
-    let audioCheckDone = false;
-
-    // ── WATCHED PERCENTAGE ──
+    // ── WATCHED PERCENTAGE + RESUME POSITION ──
     const watchProgressEl    = document.getElementById('watch-progress');
     const watchProgressPctEl = document.getElementById('watch-progress-pct');
     let lastShownPct = -1;
+    const RESUME_KEY = 'gfx_resume_' + btoa(unescape(encodeURIComponent(fileUrl))).slice(0, 40);
+    let resumeApplied = false;
+    let lastSaveTime = 0;
 
-    videoEl.addEventListener('timeupdate', () => {
-      if (!videoEl.duration || isNaN(videoEl.duration)) return;
-      const pct = Math.min(100, Math.floor((videoEl.currentTime / videoEl.duration) * 100));
+    video.addEventListener('loadedmetadata', () => {
+      if (resumeApplied) return;
+      resumeApplied = true;
+      try {
+        const saved = parseFloat(localStorage.getItem(RESUME_KEY));
+        if (saved && saved > 5 && saved < video.duration - 8) {
+          video.currentTime = saved;
+          showToast('Resumed from ' + formatTime(saved));
+        }
+      } catch (e) {}
+    });
+
+    video.addEventListener('timeupdate', () => {
+      if (!video.duration || isNaN(video.duration)) return;
+      const pct = Math.min(100, Math.floor((video.currentTime / video.duration) * 100));
       if (pct !== lastShownPct) {
         lastShownPct = pct;
         watchProgressPctEl.textContent = pct + '%';
         watchProgressEl.style.display = 'inline';
       }
+      const now = Date.now();
+      if (now - lastSaveTime > 4000) {
+        lastSaveTime = now;
+        try { localStorage.setItem(RESUME_KEY, String(video.currentTime)); } catch (e) {}
+      }
+      updateSeekUI();
     });
 
-    videoEl.addEventListener('ended', () => {
+    video.addEventListener('ended', () => {
       watchProgressPctEl.textContent = '100%';
+      try { localStorage.removeItem(RESUME_KEY); } catch (e) {}
     });
 
-
+    // ── AUDIO TRACK DETECTION (fallback to VLC) ──
+    let audioCheckDone = false;
     function checkAudioTrack() {
       if (audioCheckDone) return;
       audioCheckDone = true;
       try {
         let hasAudio = true;
-        if (typeof videoEl.mozHasAudio === 'boolean') {
-          hasAudio = videoEl.mozHasAudio;
-        } else if (typeof videoEl.webkitAudioDecodedByteCount === 'number') {
-          hasAudio = videoEl.webkitAudioDecodedByteCount > 0;
-        } else if (videoEl.audioTracks) {
-          hasAudio = videoEl.audioTracks.length > 0;
+        if (typeof video.mozHasAudio === 'boolean') {
+          hasAudio = video.mozHasAudio;
+        } else if (typeof video.webkitAudioDecodedByteCount === 'number') {
+          hasAudio = video.webkitAudioDecodedByteCount > 0;
+        } else if (video.audioTracks) {
+          hasAudio = video.audioTracks.length > 0;
         }
         if (!hasAudio) {
           document.getElementById('audio-warning').classList.add('show');
         }
       } catch (e) {}
     }
+    video.addEventListener('playing', () => setTimeout(checkAudioTrack, 1200), { once: true });
 
-    videoEl.addEventListener('playing', () => setTimeout(checkAudioTrack, 1200), { once: true });
+    /* ══════════════════ CUSTOM PLAYER CONTROLS ══════════════════ */
+    const gestureLayer  = document.getElementById('gestureLayer');
+    const controlsBar   = document.getElementById('controlsBar');
+    const centerPlayBtn = document.getElementById('centerPlayBtn');
+    const bufSpinner    = document.getElementById('bufSpinner');
+    const playPauseBtn  = document.getElementById('playPauseBtn');
+    const seekBar        = document.getElementById('seekBar');
+    const timeLabel      = document.getElementById('timeLabel');
+    const volBtn          = document.getElementById('volBtn');
+    const volSlider       = document.getElementById('volSlider');
+    const pipBtn           = document.getElementById('pipBtn');
+    const fsBtn             = document.getElementById('fsBtn');
+    const brightInd = document.getElementById('brightInd');
+    const brightFill = document.getElementById('brightFill');
+    const volInd = document.getElementById('volInd');
+    const volFill = document.getElementById('volFill');
+    const volIndIcon = document.getElementById('volIndIcon');
+    const seekFlashLeft  = document.getElementById('seekFlashLeft');
+    const seekFlashRight = document.getElementById('seekFlashRight');
 
-    // ── FULLSCREEN + ORIENTATION ──
-    const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+    function formatTime(sec) {
+      if (!isFinite(sec) || isNaN(sec)) return '0:00';
+      sec = Math.max(0, Math.floor(sec));
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      const mm = h > 0 ? String(m).padStart(2, '0') : String(m);
+      const ss = String(s).padStart(2, '0');
+      return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+    }
 
-    // ── FULLSCREEN ──
-    // Real fullscreen (Plyr's own, or native <video> fullscreen on iOS) is
-    // tried first everywhere. In-app browsers like Telegram frequently
-    // grant the Fullscreen API silently but then never actually engage it
-    // — every button press does nothing and no error is ever thrown. So
-    // instead of trying to detect Telegram, we just check, a moment after
-    // asking, whether fullscreen actually engaged. If it didn't, we fall
-    // back to a pure-CSS "pseudo-fullscreen": the player wrapper is
-    // stretched to fill the viewport with fixed positioning. It never
-    // asks the browser for permission, so it can't be blocked by
-    // anything — and since it's just CSS, Plyr's own control bar
-    // (progress, volume, mute, played time) stays fully visible.
+    function updatePlayIcon() {
+      const paused = video.paused;
+      playPauseBtn.innerHTML = paused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
+      centerPlayBtn.innerHTML = paused ? '<i class="fa-solid fa-play"></i>' : '<i class="fa-solid fa-pause"></i>';
+      centerPlayBtn.classList.toggle('show', paused);
+    }
+
+    function togglePlay() {
+      if (video.paused) video.play().catch(() => {}); else video.pause();
+    }
+
+    video.addEventListener('play', () => { updatePlayIcon(); scheduleAutoHide(); });
+    video.addEventListener('pause', () => { updatePlayIcon(); showControls(); });
+    video.addEventListener('waiting', () => bufSpinner.classList.add('show'));
+    video.addEventListener('playing', () => bufSpinner.classList.remove('show'));
+    video.addEventListener('canplay', () => bufSpinner.classList.remove('show'));
+
+    let seeking = false;
+    function updateSeekUI() {
+      if (seeking || !video.duration || isNaN(video.duration)) return;
+      seekBar.value = (video.currentTime / video.duration) * 100;
+      timeLabel.textContent = formatTime(video.currentTime) + ' / ' + formatTime(video.duration);
+    }
+    seekBar.addEventListener('input', () => {
+      seeking = true;
+      if (video.duration) {
+        timeLabel.textContent = formatTime((seekBar.value / 100) * video.duration) + ' / ' + formatTime(video.duration);
+      }
+    });
+    seekBar.addEventListener('change', () => {
+      if (video.duration) video.currentTime = (seekBar.value / 100) * video.duration;
+      seeking = false;
+    });
+
+    playPauseBtn.addEventListener('click', togglePlay);
+
+    // Volume
+    let lastVolBeforeMute = 1;
+    function setVolume(v) {
+      v = Math.max(0, Math.min(1, v));
+      video.volume = v;
+      video.muted = v === 0;
+      volSlider.value = v;
+      const icon = v === 0 ? 'fa-volume-xmark' : (v < 0.5 ? 'fa-volume-low' : 'fa-volume-high');
+      volBtn.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+      volIndIcon.className = 'fa-solid ' + icon;
+    }
+    volSlider.addEventListener('input', () => setVolume(parseFloat(volSlider.value)));
+    volBtn.addEventListener('click', () => {
+      if (video.muted || video.volume === 0) {
+        setVolume(lastVolBeforeMute || 1);
+      } else {
+        lastVolBeforeMute = video.volume;
+        setVolume(0);
+      }
+    });
+    try {
+      const savedVol = parseFloat(localStorage.getItem('gfx_volume'));
+      setVolume(isNaN(savedVol) ? 1 : savedVol);
+    } catch (e) { setVolume(1); }
+    video.addEventListener('volumechange', () => {
+      try { localStorage.setItem('gfx_volume', String(video.volume)); } catch (e) {}
+    });
+
+    pipBtn.addEventListener('click', pip_player);
+
+    // ── CONTROLS AUTO-HIDE ──
+    let hideTimer = null;
+    function showControls() {
+      controlsBar.classList.remove('hide');
+      scheduleAutoHide();
+    }
+    function scheduleAutoHide() {
+      clearTimeout(hideTimer);
+      if (video.paused) return;
+      hideTimer = setTimeout(() => controlsBar.classList.add('hide'), 3000);
+    }
+    function toggleControlsVisibility() {
+      if (controlsBar.classList.contains('hide')) showControls();
+      else { controlsBar.classList.add('hide'); clearTimeout(hideTimer); }
+    }
+
+    /* ── GESTURES: tap / double-tap seek / vertical drag for
+       brightness (left half) & volume (right half) — active in
+       fullscreen (real or pseudo), so it works for portrait/vertical
+       fullscreen too, not just landscape. ── */
+    let currentBrightness = 1;
+    function setBrightness(v) {
+      currentBrightness = Math.max(0.3, Math.min(1.8, v));
+      video.style.filter = 'brightness(' + currentBrightness + ')';
+    }
+
+    function isFsActive() {
+      return wrap.classList.contains('pseudo-fs') || isRealFullscreenActive();
+    }
+
+    function showGestIndicator(type, pct) {
+      const ind = type === 'brightness' ? brightInd : volInd;
+      const fill = type === 'brightness' ? brightFill : volFill;
+      fill.style.height = Math.round(pct * 100) + '%';
+      ind.classList.add('show');
+      clearTimeout(showGestIndicator._t);
+      showGestIndicator._t = setTimeout(hideGestIndicators, 700);
+    }
+    function hideGestIndicators() {
+      brightInd.classList.remove('show');
+      volInd.classList.remove('show');
+    }
+
+    function flashSeek(dir) {
+      const el = dir === 'left' ? seekFlashLeft : seekFlashRight;
+      el.classList.add('show');
+      clearTimeout(el._t);
+      el._t = setTimeout(() => el.classList.remove('show'), 550);
+    }
+
+    function seekBy(delta) {
+      if (!video.duration) return;
+      video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + delta));
+    }
+
+    let pdX = 0, pdY = 0, pdTime = 0, dragging = false, dragType = null, dragBase = 0, dragStartY = 0;
+    let tapTimer = null, lastTapTime = 0, lastTapX = 0;
+
+    function onPointerDown(e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      try { gestureLayer.setPointerCapture(e.pointerId); } catch (err) {}
+      pdX = e.clientX; pdY = e.clientY; pdTime = Date.now();
+      dragging = false; dragType = null;
+    }
+
+    function onPointerMove(e) {
+      if (!pdTime) return;
+      const dx = e.clientX - pdX, dy = e.clientY - pdY;
+      if (!dragging && isFsActive() && Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 14) {
+        dragging = true;
+        const rect = wrap.getBoundingClientRect();
+        const relX = (pdX - rect.left) / rect.width;
+        dragType = relX < 0.5 ? 'brightness' : 'volume';
+        dragBase = dragType === 'brightness' ? currentBrightness : video.volume;
+        dragStartY = e.clientY;
+      }
+      if (dragging) {
+        const rect = wrap.getBoundingClientRect();
+        const deltaY = dragStartY - e.clientY;
+        const range = Math.max(160, rect.height * 0.65);
+        if (dragType === 'volume') {
+          const v = Math.max(0, Math.min(1, dragBase + deltaY / range));
+          setVolume(v);
+          showGestIndicator('volume', v);
+        } else {
+          const v = Math.max(0.3, Math.min(1.8, dragBase + (deltaY / range) * 1.5));
+          setBrightness(v);
+          showGestIndicator('brightness', (v - 0.3) / 1.5);
+        }
+      }
+    }
+
+    function onPointerUp(e) {
+      if (dragging) {
+        hideGestIndicators();
+        dragging = false; dragType = null; pdTime = 0;
+        return;
+      }
+      const dt = Date.now() - pdTime;
+      pdTime = 0;
+      if (dt < 400) handleTap(e.clientX);
+    }
+
+    function handleTap(x) {
+      const now = Date.now();
+      const rect = wrap.getBoundingClientRect();
+      const relX = (x - rect.left) / rect.width;
+      if (tapTimer && now - lastTapTime < 320 && Math.abs(x - lastTapX) < 80) {
+        clearTimeout(tapTimer); tapTimer = null;
+        if (relX < 0.35) { seekBy(-10); flashSeek('left'); showControls(); }
+        else if (relX > 0.65) { seekBy(10); flashSeek('right'); showControls(); }
+        else { togglePlay(); showControls(); }
+        return;
+      }
+      lastTapTime = now; lastTapX = x;
+      tapTimer = setTimeout(() => {
+        tapTimer = null;
+        toggleControlsVisibility();
+      }, 320);
+    }
+
+    gestureLayer.addEventListener('pointerdown', onPointerDown);
+    gestureLayer.addEventListener('pointermove', onPointerMove);
+    gestureLayer.addEventListener('pointerup', onPointerUp);
+    gestureLayer.addEventListener('pointercancel', () => { dragging = false; dragType = null; pdTime = 0; });
+
+    // Keyboard shortcuts (desktop)
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (e.code === 'Space') { e.preventDefault(); togglePlay(); showControls(); }
+      else if (e.code === 'ArrowLeft') { seekBy(-10); flashSeek('left'); showControls(); }
+      else if (e.code === 'ArrowRight') { seekBy(10); flashSeek('right'); showControls(); }
+      else if (e.code === 'ArrowUp') { e.preventDefault(); setVolume(video.volume + 0.1); showControls(); }
+      else if (e.code === 'ArrowDown') { e.preventDefault(); setVolume(video.volume - 0.1); showControls(); }
+      else if (e.key === 'f' || e.key === 'F') { toggleFullscreen(); }
+    });
+
+    /* ── FULLSCREEN — no forced orientation lock, so vertical
+       (portrait) videos work correctly in fullscreen too ── */
     function isRealFullscreenActive() {
       return !!(
         document.fullscreenElement ||
         document.webkitFullscreenElement ||
         document.webkitCurrentFullScreenElement ||
-        (videoEl.webkitDisplayingFullscreen)
+        video.webkitDisplayingFullscreen
       );
     }
 
     function enterRealFullscreen() {
-      if (isIOSDevice) {
-        if (videoEl.webkitEnterFullscreen) { videoEl.webkitEnterFullscreen(); return true; }
-        if (videoEl.requestFullscreen) { videoEl.requestFullscreen().catch(() => {}); return true; }
-        return false;
+      if (isIOSDevice && video.webkitEnterFullscreen) {
+        video.webkitEnterFullscreen();
+        return true;
       }
-      try {
-        if (player.fullscreen && player.fullscreen.enter) {
-          player.fullscreen.enter();
-          return true;
-        }
-      } catch (e) {}
+      if (wrap.requestFullscreen) { wrap.requestFullscreen().catch(() => {}); return true; }
+      if (wrap.webkitRequestFullscreen) { wrap.webkitRequestFullscreen(); return true; }
       return false;
     }
 
     function exitRealFullscreen() {
       if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
       else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-      else if (videoEl.webkitExitFullscreen) videoEl.webkitExitFullscreen();
+      else if (video.webkitExitFullscreen) video.webkitExitFullscreen();
     }
 
     function enterPseudoFullscreen() {
-      document.querySelector('.player-section').classList.add('pseudo-fs');
+      wrap.classList.add('pseudo-fs');
       document.body.style.overflow = 'hidden';
-      lockLandscape();
       updateFsExitVisibility();
-      // Push a history entry so the phone's back button/gesture closes
-      // pseudo-fullscreen instead of leaving the player stuck stretched
-      // over the page (it was never real fullscreen, so the browser has
-      // no built-in way to know "back" should undo it — without this,
-      // pressing back either did nothing visible or left the overlap).
       history.pushState({ pseudoFs: true }, '');
     }
 
     function exitPseudoFullscreen() {
-      // If we're still on the history entry pushed when entering, go back
-      // to consume it — this keeps a later real "back" press from landing
-      // on a stale pseudo-fs state and reopening the overlap. doExit()
-      // itself runs from the popstate handler below either way.
-      if (history.state && history.state.pseudoFs) {
-        history.back();
-      } else {
-        doExitPseudoFullscreen();
-      }
+      if (history.state && history.state.pseudoFs) history.back();
+      else doExitPseudoFullscreen();
     }
 
     function doExitPseudoFullscreen() {
-      document.querySelector('.player-section').classList.remove('pseudo-fs');
+      wrap.classList.remove('pseudo-fs');
       document.body.style.overflow = '';
-      unlockOrientation();
       updateFsExitVisibility();
     }
 
     window.addEventListener('popstate', () => {
-      if (document.querySelector('.player-section').classList.contains('pseudo-fs')) {
-        doExitPseudoFullscreen();
-      }
+      if (wrap.classList.contains('pseudo-fs')) doExitPseudoFullscreen();
     });
 
     function updateFsExitVisibility() {
       const btn = document.getElementById('pseudo-fs-exit');
-      if (!btn) return;
-      const active = document.querySelector('.player-section').classList.contains('pseudo-fs');
-      btn.style.display = active ? 'flex' : 'none';
+      btn.style.display = wrap.classList.contains('pseudo-fs') ? 'flex' : 'none';
     }
 
     function toggleFullscreen() {
-      const wrap = document.querySelector('.player-section');
       if (wrap.classList.contains('pseudo-fs')) { exitPseudoFullscreen(); return; }
       if (isRealFullscreenActive()) { exitRealFullscreen(); return; }
-
       const attempted = enterRealFullscreen();
       setTimeout(() => {
-        if (!isRealFullscreenActive()) {
-          enterPseudoFullscreen();
-        } else {
-          lockLandscape();
-        }
+        if (!isRealFullscreenActive()) enterPseudoFullscreen();
       }, attempted ? 350 : 0);
     }
 
-    async function lockLandscape() {
-      try {
-        if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock('landscape');
-        }
-      } catch (e) {}
+    fsBtn.addEventListener('click', toggleFullscreen);
+
+    function updateFsIcon() {
+      fsBtn.innerHTML = isRealFullscreenActive()
+        ? '<i class="fa-solid fa-compress"></i>'
+        : '<i class="fa-solid fa-expand"></i>';
     }
+    document.addEventListener('fullscreenchange', updateFsIcon);
+    document.addEventListener('webkitfullscreenchange', updateFsIcon);
 
-    async function unlockOrientation() {
-      try {
-        if (screen.orientation && screen.orientation.unlock) {
-          screen.orientation.unlock();
-        }
-      } catch (e) {}
-    }
-
-    player.on('enterfullscreen', lockLandscape);
-    player.on('exitfullscreen', unlockOrientation);
-
-    document.addEventListener('fullscreenchange', () => {
-      if (document.fullscreenElement) lockLandscape(); else unlockOrientation();
-    });
-    document.addEventListener('webkitfullscreenchange', () => {
-      if (document.webkitFullscreenElement) lockLandscape(); else unlockOrientation();
-    });
-
-    // Intercept every click on Plyr's own fullscreen button and drive it
-    // through toggleFullscreen() instead, so the pseudo-fullscreen
-    // fallback is always in play, on every platform.
-    document.addEventListener('click', e => {
-      const fsBtn = e.target.closest('[data-plyr="fullscreen"]');
-      if (!fsBtn) return;
-      e.stopPropagation();
-      e.preventDefault();
-      toggleFullscreen();
-    }, true);
+    // Init
+    updatePlayIcon();
+    updateSeekUI();
+    scheduleAutoHide();
 
     // ── SERVER STATUS DASHBOARD ──
     const nodeIds = ['SRV—IN·01','SRV—IN·02','SRV—IN·03','SRV—IN·04','SRV—SG·01','SRV—SG·02'];
@@ -1268,57 +1520,6 @@
     setInterval(() => {
       document.getElementById('stat-uptime').textContent = formatUptime(Date.now() - bootTime);
     }, 1000);
-
-    // ── ANT CURSOR (desktop only) ──
-    const isMouseDevice = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-    if (isMouseDevice) {
-      const antStyle = document.createElement('style');
-      antStyle.textContent = `
-        #css-ant { position:fixed; pointer-events:none; z-index:2147483647; width:28px; height:16px; top:-40px; left:-40px; will-change:left,top; }
-        #css-ant svg { width:100%; height:100%; overflow:visible; animation:antBob 0.25s ease-in-out infinite alternate; }
-        @keyframes antBob { from{transform:translateY(0)} to{transform:translateY(1.5px)} }
-        .al1{animation:legSwingF 0.25s ease-in-out infinite alternate;transform-origin:8px 8px;}
-        .al2{animation:legSwingB 0.25s ease-in-out infinite alternate;transform-origin:13px 8px;}
-        .al3{animation:legSwingF 0.25s ease-in-out infinite alternate;transform-origin:18px 8px;}
-        .ar1{animation:legSwingB 0.25s ease-in-out infinite alternate;transform-origin:8px 8px;}
-        .ar2{animation:legSwingF 0.25s ease-in-out infinite alternate;transform-origin:13px 8px;}
-        .ar3{animation:legSwingB 0.25s ease-in-out infinite alternate;transform-origin:18px 8px;}
-        @keyframes legSwingF{from{transform:rotate(-30deg)}to{transform:rotate(30deg)}}
-        @keyframes legSwingB{from{transform:rotate(30deg)}to{transform:rotate(-30deg)}}
-        .aa{animation:antennaWave 0.5s ease-in-out infinite alternate;transform-origin:22px 4px;}
-        .aa2{animation:antennaWave 0.5s ease-in-out infinite alternate-reverse;transform-origin:24px 4px;}
-        @keyframes antennaWave{from{transform:rotate(-10deg)}to{transform:rotate(10deg)}}
-      `;
-      document.head.appendChild(antStyle);
-
-      const ant = document.createElement('div');
-      ant.id = 'css-ant';
-      ant.innerHTML = `<svg viewBox="0 0 32 16" xmlns="http://www.w3.org/2000/svg">
-        <line class="al1" x1="8" y1="8" x2="3" y2="13" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <line class="al2" x1="13" y1="8" x2="8" y2="14" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <line class="al3" x1="18" y1="8" x2="13" y2="13" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <line class="ar1" x1="8" y1="8" x2="3" y2="3" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <line class="ar2" x1="13" y1="8" x2="8" y2="2" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <line class="ar3" x1="18" y1="8" x2="13" y2="3" stroke="#222" stroke-width="1.2" stroke-linecap="round"/>
-        <ellipse cx="8" cy="8" rx="4" ry="3.5" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
-        <ellipse cx="16" cy="8" rx="4.5" ry="3.5" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
-        <ellipse cx="24" cy="8" rx="3.5" ry="3" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
-        <circle cx="29" cy="8" r="2.5" fill="#1a1a1a" stroke="#444" stroke-width="0.4"/>
-        <circle cx="30" cy="7" r="0.6" fill="#e50914"/>
-        <line class="aa"  x1="29" y1="5.5" x2="27" y2="2" stroke="#333" stroke-width="0.9" stroke-linecap="round"/>
-        <line class="aa2" x1="29" y1="5.5" x2="30" y2="1.5" stroke="#333" stroke-width="0.9" stroke-linecap="round"/>
-      </svg>`;
-      document.body.appendChild(ant);
-
-      let prevX = 0;
-      document.addEventListener('mousemove', e => {
-        const dx = e.clientX - prevX;
-        ant.style.transform = dx < 0 ? 'translate(-100%,-50%) scaleX(-1)' : 'translate(0,-50%)';
-        ant.style.left = e.clientX + 'px';
-        ant.style.top  = e.clientY + 'px';
-        prevX = e.clientX;
-      });
-    }
   </script>
 </body>
 </html>
