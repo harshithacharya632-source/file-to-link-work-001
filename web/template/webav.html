@@ -276,6 +276,41 @@
       z-index: 9999;
     }
 
+    /* Pseudo-fullscreen: pure CSS, no browser Fullscreen API involved —
+       used as a fallback when the real one is silently blocked (common
+       in Telegram's in-app browser and similar embedded WebViews). */
+    .player-section.pseudo-fs {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 99998;
+      background: #000;
+    }
+    .player-section.pseudo-fs .plyr,
+    .player-section.pseudo-fs video {
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 100vh !important;
+    }
+    #pseudo-fs-exit {
+      display: none;
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 99999;
+      background: rgba(0,0,0,.65);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
     /* Audio fallback banner */
     #audio-warning {
       display: none;
@@ -693,6 +728,9 @@
     <video id="myVideo" playsinline>
       <source src="{{file_url}}" type="video/mp4">
     </video>
+    <button id="pseudo-fs-exit" onclick="exitPseudoFullscreen()" title="Exit fullscreen">
+      <i class="fa-solid fa-compress"></i>
+    </button>
   </div>
 
   <!-- CONTENT -->
@@ -824,13 +862,8 @@
     const fileUrl  = "{{file_url}}";
     const fileName = "{{file_name}}";
 
-    // ── TELEGRAM IN-APP BROWSER DETECTION ──
-    // Telegram's WebView (mobile app + web.telegram.org) blocks custom
-    // intent:// / package launches for security, so app-open buttons
-    // silently fail there. We detect it and fall back to copy-link + toast.
-    const isTelegramWebView = !!window.TelegramWebviewProxy ||
-      !!window.TelegramWebviewProxyProto ||
-      /\bTelegram\b/i.test(navigator.userAgent);
+    // ── DEVICE DETECTION ──
+    const isIOSDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     function copyToClipboard(text) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -846,17 +879,6 @@
       try { document.execCommand('copy'); } catch (e) {}
       document.body.removeChild(ta);
       return Promise.resolve();
-    }
-
-    function openOrCopy(intentUrl, appLabel) {
-      if (isTelegramWebView) {
-        copyToClipboard(fileUrl).then(() => {
-          showToast(`Telegram browser blocks app links. Link copied — paste it into ${appLabel}.`);
-        });
-        return;
-      }
-      window.location.href = intentUrl;
-      setTimeout(() => showToast(`Opening ${appLabel}...`), 300);
     }
 
     // ── COPY VLC LINK (for VLC on PC/laptop via Open Network Stream) ──
@@ -887,20 +909,45 @@
       setTimeout(() => t.classList.remove('show'), 2600);
     }
 
-    // ── MX PLAYER ──
-    function mx_player() {
-      const intentUrl = `intent:${fileUrl}#Intent;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent(fileName)};end`;
-      if (isTelegramWebView) {
-        openOrCopy(intentUrl, "MX Player");
-        return;
-      }
-      const start = Date.now();
+    // ── EXTERNAL PLAYER LAUNCHER ──
+    // Uses the canonical intent:// format (host WITHOUT the https:// prefix,
+    // plus an explicit scheme=https; parameter) instead of the older
+    // intent:https://... mixed form — this is the format Android's system
+    // WebView (which Telegram's in-app browser is built on) actually
+    // recognizes, so it can launch the app even inside Telegram, not just
+    // in Chrome. We still watch for the page being backgrounded and fall
+    // back to copy-link if nothing opens after a short wait, in case a
+    // specific app isn't installed or a particular WebView build still
+    // blocks it.
+    function openExternalPlayer(pkg, appLabel) {
+      const path = fileUrl.replace(/^https?:\/\//, '');
+      const intentUrl = `intent://${path}#Intent;package=${pkg};type=video/*;scheme=https;end`;
+      let opened = false;
+      function onVis() { if (document.hidden) opened = true; }
+      document.addEventListener('visibilitychange', onVis);
       window.location.href = intentUrl;
       setTimeout(() => {
-        if (Date.now() - start < 2000) {
-          document.getElementById('mx-modal').classList.add('open');
+        document.removeEventListener('visibilitychange', onVis);
+        if (opened) {
+          showToast(`Opening ${appLabel}...`);
+        } else {
+          copyToClipboard(fileUrl).then(() => {
+            showToast(`Couldn't open ${appLabel} — link copied, paste it in manually`);
+          });
         }
-      }, 1500);
+      }, 1200);
+    }
+
+    // ── MX PLAYER ──
+    function mx_player() {
+      if (isIOSDevice) {
+        // No MX Player on iOS — copy the link instead.
+        copyToClipboard(fileUrl).then(() => {
+          showToast("MX Player isn't available on iOS — link copied instead");
+        });
+        return;
+      }
+      openExternalPlayer('com.mxtech.videoplayer.ad', 'MX Player');
     }
 
     function closeMxModal() {
@@ -913,14 +960,22 @@
 
     // ── VLC ──
     function vlc_player() {
-      const intentUrl = `intent:${fileUrl}#Intent;package=org.videolan.vlc;action=android.intent.action.VIEW;type=video/*;end`;
-      openOrCopy(intentUrl, "VLC");
+      if (isIOSDevice) {
+        // VLC for iOS uses its own x-callback URL scheme.
+        window.location.href = 'vlc-x-callback://x-callback-url/stream?url=' + encodeURIComponent(fileUrl);
+        return;
+      }
+      openExternalPlayer('org.videolan.vlc', 'VLC');
     }
 
     // ── PLAY IT ──
     function playit_player() {
-      const intentUrl = `intent:${fileUrl}#Intent;package=com.playit.videoplayer;action=android.intent.action.VIEW;type=video/*;end`;
-      openOrCopy(intentUrl, "Play it");
+      if (isIOSDevice) {
+        // Outplayer is the closest iOS equivalent, uses its own scheme.
+        window.location.href = 'outplayer://' + fileUrl.replace(/^https?:\/\//, '');
+        return;
+      }
+      openExternalPlayer('com.playit.videoplayer', 'Play it');
     }
 
     // ── PICTURE-IN-PICTURE ──
@@ -1012,6 +1067,84 @@
     // ── FULLSCREEN + ORIENTATION ──
     const isMobileDevice = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
+    // ── FULLSCREEN ──
+    // Real fullscreen (Plyr's own, or native <video> fullscreen on iOS) is
+    // tried first everywhere. In-app browsers like Telegram frequently
+    // grant the Fullscreen API silently but then never actually engage it
+    // — every button press does nothing and no error is ever thrown. So
+    // instead of trying to detect Telegram, we just check, a moment after
+    // asking, whether fullscreen actually engaged. If it didn't, we fall
+    // back to a pure-CSS "pseudo-fullscreen": the player wrapper is
+    // stretched to fill the viewport with fixed positioning. It never
+    // asks the browser for permission, so it can't be blocked by
+    // anything — and since it's just CSS, Plyr's own control bar
+    // (progress, volume, mute, played time) stays fully visible.
+    function isRealFullscreenActive() {
+      return !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.webkitCurrentFullScreenElement ||
+        (videoEl.webkitDisplayingFullscreen)
+      );
+    }
+
+    function enterRealFullscreen() {
+      if (isIOSDevice) {
+        if (videoEl.webkitEnterFullscreen) { videoEl.webkitEnterFullscreen(); return true; }
+        if (videoEl.requestFullscreen) { videoEl.requestFullscreen().catch(() => {}); return true; }
+        return false;
+      }
+      try {
+        if (player.fullscreen && player.fullscreen.enter) {
+          player.fullscreen.enter();
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    function exitRealFullscreen() {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (videoEl.webkitExitFullscreen) videoEl.webkitExitFullscreen();
+    }
+
+    function enterPseudoFullscreen() {
+      document.querySelector('.player-section').classList.add('pseudo-fs');
+      document.body.style.overflow = 'hidden';
+      lockLandscape();
+      updateFsExitVisibility();
+    }
+
+    function exitPseudoFullscreen() {
+      document.querySelector('.player-section').classList.remove('pseudo-fs');
+      document.body.style.overflow = '';
+      unlockOrientation();
+      updateFsExitVisibility();
+    }
+
+    function updateFsExitVisibility() {
+      const btn = document.getElementById('pseudo-fs-exit');
+      if (!btn) return;
+      const active = document.querySelector('.player-section').classList.contains('pseudo-fs');
+      btn.style.display = active ? 'flex' : 'none';
+    }
+
+    function toggleFullscreen() {
+      const wrap = document.querySelector('.player-section');
+      if (wrap.classList.contains('pseudo-fs')) { exitPseudoFullscreen(); return; }
+      if (isRealFullscreenActive()) { exitRealFullscreen(); return; }
+
+      const attempted = enterRealFullscreen();
+      setTimeout(() => {
+        if (!isRealFullscreenActive()) {
+          enterPseudoFullscreen();
+        } else {
+          lockLandscape();
+        }
+      }, attempted ? 350 : 0);
+    }
+
     async function lockLandscape() {
       try {
         if (screen.orientation && screen.orientation.lock) {
@@ -1038,30 +1171,16 @@
       if (document.webkitFullscreenElement) lockLandscape(); else unlockOrientation();
     });
 
-    // Only iOS lacks Fullscreen API support on arbitrary elements, so it's
-    // the one platform that genuinely needs native <video> fullscreen.
-    // Everywhere else (Android included) should use Plyr's own fullscreen,
-    // which keeps the full control bar (progress, volume, mute, time)
-    // visible — forcing native video fullscreen on Android was stripping
-    // all of that out, leaving a bare video with no controls at all.
-    const isIOSDevice = /iPad|iPhone|iPod/i.test(navigator.userAgent) && !window.MSStream;
-
-    if (isIOSDevice) {
-      document.addEventListener('click', e => {
-        const fsBtn = e.target.closest('[data-plyr="fullscreen"]');
-        if (!fsBtn) return;
-        e.stopPropagation(); e.preventDefault();
-        if (videoEl.webkitEnterFullscreen) {
-          videoEl.webkitEnterFullscreen();
-        } else if (videoEl.requestFullscreen) {
-          videoEl.requestFullscreen();
-        }
-        setTimeout(lockLandscape, 300);
-      }, true);
-
-      videoEl.addEventListener('webkitbeginfullscreen', lockLandscape);
-      videoEl.addEventListener('webkitendfullscreen', unlockOrientation);
-    }
+    // Intercept every click on Plyr's own fullscreen button and drive it
+    // through toggleFullscreen() instead, so the pseudo-fullscreen
+    // fallback is always in play, on every platform.
+    document.addEventListener('click', e => {
+      const fsBtn = e.target.closest('[data-plyr="fullscreen"]');
+      if (!fsBtn) return;
+      e.stopPropagation();
+      e.preventDefault();
+      toggleFullscreen();
+    }, true);
 
     // ── SERVER STATUS DASHBOARD ──
     const nodeIds = ['SRV—IN·01','SRV—IN·02','SRV—IN·03','SRV—IN·04','SRV—SG·01','SRV—SG·02'];
