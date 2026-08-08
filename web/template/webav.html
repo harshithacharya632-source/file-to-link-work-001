@@ -37,6 +37,12 @@
       --muted: #7a7f8a;
       --radius: 12px;
       --mono: 'Space Mono', monospace;
+      --ant-body: #d9a45c;
+      --ant-body-dark: #a5661f;
+      --ant-outline: #241505;
+      --ant-leg: #3a2410;
+      --ant-shine: rgba(255,255,255,0.35);
+      --ant-eye: #ff5f3d;
     }
 
     [data-theme="light"] {
@@ -46,6 +52,12 @@
       --border: #d3d7dc;
       --text: #111318;
       --muted: #767c86;
+      --ant-body: #2a1c12;
+      --ant-body-dark: #150d07;
+      --ant-outline: #000000;
+      --ant-leg: #1a1108;
+      --ant-shine: rgba(255,255,255,0.18);
+      --ant-eye: #ff3b1f;
     }
 
     body {
@@ -77,20 +89,17 @@
     }
     [data-theme="light"] body::before { opacity: 0.4; }
 
-    body::after {
-      content: '';
+    header, .content, footer, #toast, #mx-modal { position: relative; z-index: 1; }
+
+    /* ── ANTIGRAVITY FIELD (desktop only, sits behind everything) ── */
+    #field {
       position: fixed;
-      left: 0; right: 0;
-      height: 2px;
+      inset: 0;
       z-index: 0;
       pointer-events: none;
-      background: linear-gradient(90deg, transparent, var(--sys-dim), transparent);
-      animation: scanline 5s linear infinite;
-      opacity: 0.5;
+      display: none;
     }
-    @keyframes scanline { 0% { top: -2%; } 100% { top: 102%; } }
-
-    header, .content, footer, #toast, #mx-modal { position: relative; z-index: 1; }
+    .field-on #field { display: block; }
 
     /* ── HEADER ── */
     header {
@@ -199,6 +208,31 @@
     }
 
     .theme-btn:hover { opacity: 0.8; }
+
+    .ant-home-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    @media (hover: hover) and (pointer: fine) {
+      .ant-home-btn { display: flex; }
+    }
+    .ant-home-btn:hover { border-color: var(--sys); }
+    .ant-home-btn.active {
+      border-color: var(--sys);
+      background: rgba(0,229,138,0.15);
+      box-shadow: 0 0 10px var(--sys-dim);
+    }
 
     /* ══════════════════ CUSTOM VIDEO PLAYER ══════════════════ */
     .player-wrap {
@@ -813,6 +847,8 @@
 </head>
 <body>
 
+  <canvas id="field"></canvas>
+
   <!-- HEADER -->
   <header>
     <div class="logo-wrap">
@@ -826,6 +862,7 @@
         <i class="fa-solid fa-circle" style="color:#e50914; animation: pulse 1.5s infinite; font-size:7px;"></i>
         LIVE
       </div>
+      <button class="ant-home-btn" id="ant-home-btn" title="Send ant home">🏠</button>
       <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">
         <i class="fa-solid fa-moon"></i> Dark
       </button>
@@ -1620,6 +1657,216 @@
     setInterval(() => {
       document.getElementById('stat-uptime').textContent = formatUptime(Date.now() - bootTime);
     }, 1000);
+
+    // ── DESKTOP-ONLY EXTRAS: ant cursor + antigravity cursor-wave field ──
+    const isMouseDevice = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    if (isMouseDevice) {
+      document.body.classList.add('field-on');
+      const canvas = document.getElementById('field');
+      const ctx = canvas.getContext('2d');
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      let fw, fh, fcols, frows, fgrid = [];
+      const fmouse = { x: -9999, y: -9999 };
+      const fclamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+      function buildFieldGrid() {
+        const gap = fclamp(fw / 15, 62, 92);
+        fcols = Math.ceil(fw / gap) + 2;
+        frows = Math.ceil(fh / gap) + 2;
+        fgrid = [];
+        for (let i = 0; i < fcols; i++) {
+          const col = [];
+          for (let j = 0; j < frows; j++) {
+            const bx = i * gap;
+            const by = j * gap;
+            col.push({ bx, by, x: bx, y: by, vx: 0, vy: 0 });
+          }
+          fgrid.push(col);
+        }
+      }
+
+      function resizeField() {
+        fw = canvas.width = window.innerWidth;
+        fh = canvas.height = window.innerHeight;
+        buildFieldGrid();
+      }
+      resizeField();
+
+      let fResizeTimer;
+      window.addEventListener('resize', () => { clearTimeout(fResizeTimer); fResizeTimer = setTimeout(resizeField, 180); });
+
+      window.addEventListener('mousemove', e => { fmouse.x = e.clientX; fmouse.y = e.clientY; });
+      window.addEventListener('mouseleave', () => { fmouse.x = -9999; fmouse.y = -9999; });
+
+      const F_RADIUS = 170;
+      const F_REPEL = 1.7;
+
+      function fieldLine(p, q, disp) {
+        const alpha = fclamp(0.035 + disp * 0.5, 0.035, 0.5);
+        const useSys = disp > 0.12;
+        ctx.strokeStyle = useSys ? `rgba(0,229,138,${alpha})` : `rgba(255,255,255,${alpha * 0.45})`;
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(q.x, q.y);
+        ctx.stroke();
+      }
+
+      function fieldStep() {
+        for (let i = 0; i < fcols; i++) {
+          for (let j = 0; j < frows; j++) {
+            const p = fgrid[i][j];
+            const dx = p.x - fmouse.x;
+            const dy = p.y - fmouse.y;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 0.001;
+            if (dist < F_RADIUS) {
+              const force = (1 - dist / F_RADIUS) * F_REPEL;
+              p.vx += (dx / dist) * force;
+              p.vy += (dy / dist) * force;
+            }
+            p.vx += (p.bx - p.x) * 0.025;
+            p.vy += (p.by - p.y) * 0.025;
+            p.vx *= 0.88;
+            p.vy *= 0.88;
+            p.x += p.vx;
+            p.y += p.vy;
+          }
+        }
+
+        ctx.clearRect(0, 0, fw, fh);
+        ctx.lineWidth = 1;
+
+        for (let i = 0; i < fcols; i++) {
+          for (let j = 0; j < frows; j++) {
+            const p = fgrid[i][j];
+            const disp = Math.min(1, Math.hypot(p.x - p.bx, p.y - p.by) / 30);
+            if (i < fcols - 1) fieldLine(p, fgrid[i + 1][j], disp);
+            if (j < frows - 1) fieldLine(p, fgrid[i][j + 1], disp);
+          }
+        }
+
+        if (!reduced) requestAnimationFrame(fieldStep);
+      }
+
+      requestAnimationFrame(fieldStep);
+      if (reduced) fieldStep();
+
+      // ── ANT CURSOR (realistic, theme-aware) ──
+      const antStyle = document.createElement('style');
+      antStyle.textContent = `
+        #css-ant { position:fixed; pointer-events:none; z-index:2147483647; width:30px; height:18px; top:-40px; left:-40px; will-change:left,top; }
+        #css-ant svg { width:100%; height:100%; overflow:visible; animation:antBob 0.22s ease-in-out infinite alternate; }
+        @keyframes antBob { from{transform:translateY(0)} to{transform:translateY(1.2px)} }
+        .al1{animation:legSwingF 0.22s ease-in-out infinite alternate;transform-origin:22px 11.5px;}
+        .al2{animation:legSwingB 0.22s ease-in-out infinite alternate;transform-origin:19px 11.5px;}
+        .al3{animation:legSwingF 0.22s ease-in-out infinite alternate;transform-origin:16px 11.5px;}
+        .ar1{animation:legSwingB 0.22s ease-in-out infinite alternate;transform-origin:22px 6.5px;}
+        .ar2{animation:legSwingF 0.22s ease-in-out infinite alternate;transform-origin:19px 6.5px;}
+        .ar3{animation:legSwingB 0.22s ease-in-out infinite alternate;transform-origin:16px 6.5px;}
+        @keyframes legSwingF{from{transform:rotate(-16deg)}to{transform:rotate(16deg)}}
+        @keyframes legSwingB{from{transform:rotate(16deg)}to{transform:rotate(-16deg)}}
+        .aa{animation:antennaWave 0.5s ease-in-out infinite alternate;transform-origin:26px 8px;}
+        .aa2{animation:antennaWave 0.5s ease-in-out infinite alternate-reverse;transform-origin:26px 10px;}
+        @keyframes antennaWave{from{transform:rotate(-9deg)}to{transform:rotate(9deg)}}
+      `;
+      document.head.appendChild(antStyle);
+
+      const ant = document.createElement('div');
+      ant.id = 'css-ant';
+      ant.innerHTML = `<svg viewBox="0 0 30 18" xmlns="http://www.w3.org/2000/svg">
+        <!-- near-side (bottom) legs, jointed at the knee -->
+        <path class="al1" d="M22,11.5 L24,14 L23,17" fill="none" stroke="var(--ant-leg)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+        <path class="al2" d="M19,11.5 L19,14.5 L18,17.5" fill="none" stroke="var(--ant-leg)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+        <path class="al3" d="M16,11.5 L13,14 L11,16.5" fill="none" stroke="var(--ant-leg)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- far-side (top) legs -->
+        <path class="ar1" d="M22,6.5 L24,4 L23,1" fill="none" stroke="var(--ant-leg)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+        <path class="ar2" d="M19,6.5 L19,3.5 L18,0.5" fill="none" stroke="var(--ant-leg)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+        <path class="ar3" d="M16,6.5 L13,4 L11,1.5" fill="none" stroke="var(--ant-leg)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- abdomen -->
+        <ellipse cx="9" cy="9" rx="5.8" ry="4.3" fill="var(--ant-body-dark)" stroke="var(--ant-outline)" stroke-width="0.45"/>
+        <ellipse cx="7" cy="7.2" rx="2.1" ry="1.2" fill="var(--ant-shine)" opacity="0.55"/>
+        <!-- petiole (waist) -->
+        <circle cx="14.5" cy="9" r="1.15" fill="var(--ant-outline)"/>
+        <!-- thorax -->
+        <ellipse cx="19" cy="9" rx="3.6" ry="3.1" fill="var(--ant-body)" stroke="var(--ant-outline)" stroke-width="0.45"/>
+        <ellipse cx="18" cy="7.6" rx="1.3" ry="0.8" fill="var(--ant-shine)" opacity="0.5"/>
+        <!-- head -->
+        <circle cx="26" cy="9" r="2.6" fill="var(--ant-body)" stroke="var(--ant-outline)" stroke-width="0.45"/>
+        <ellipse cx="25.3" cy="8" rx="0.9" ry="0.55" fill="var(--ant-shine)" opacity="0.6"/>
+        <!-- eyes -->
+        <circle cx="27.1" cy="7.7" r="0.55" fill="var(--ant-eye)"/>
+        <circle cx="27.1" cy="10.3" r="0.55" fill="var(--ant-eye)"/>
+        <!-- mandibles -->
+        <line x1="28.4" y1="8.6" x2="29.8" y2="7.9" stroke="var(--ant-leg)" stroke-width="0.7" stroke-linecap="round"/>
+        <line x1="28.4" y1="9.4" x2="29.8" y2="10.1" stroke="var(--ant-leg)" stroke-width="0.7" stroke-linecap="round"/>
+        <!-- antennae -->
+        <path class="aa"  d="M26,8 Q24.5,4.5 23,2.2" fill="none" stroke="var(--ant-leg)" stroke-width="0.8" stroke-linecap="round"/>
+        <path class="aa2" d="M26,10 Q27.5,13.5 29,15.5" fill="none" stroke="var(--ant-leg)" stroke-width="0.8" stroke-linecap="round"/>
+      </svg>`;
+      document.body.appendChild(ant);
+
+      let antFollowing = true;
+      const homeBtn = document.getElementById('ant-home-btn');
+
+      // small gap so the ant trails behind the cursor rather than sitting on top of it
+      const FOLLOW_GAP_X = 18;
+      const FOLLOW_GAP_Y = 14;
+
+      let mouseX = window.innerWidth / 2;
+      let mouseY = window.innerHeight / 2;
+      let antX = mouseX;
+      let antY = mouseY;
+      let facingLeft = false;
+
+      document.addEventListener('mousemove', e => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+      });
+
+      function antFrame() {
+        let targetX, targetY, ease;
+
+        if (antFollowing) {
+          targetX = mouseX + FOLLOW_GAP_X;
+          targetY = mouseY + FOLLOW_GAP_Y;
+          ease = 0.16; // trailing gap: ant eases toward the cursor instead of snapping to it
+        } else if (homeBtn) {
+          // re-read the button's live position every frame, so the ant
+          // never drifts away from it even if the layout shifts on scroll/resize
+          const rect = homeBtn.getBoundingClientRect();
+          targetX = rect.left + rect.width / 2;
+          targetY = rect.top + rect.height / 2;
+          ease = 0.22;
+        } else {
+          targetX = antX;
+          targetY = antY;
+          ease = 0;
+        }
+
+        const dx = targetX - antX;
+        const dy = targetY - antY;
+        antX += dx * ease;
+        antY += dy * ease;
+
+        if (Math.abs(dx) > 0.6) facingLeft = dx < 0;
+        ant.style.transform = facingLeft ? 'translate(-50%,-50%) scaleX(-1)' : 'translate(-50%,-50%)';
+        ant.style.left = antX + 'px';
+        ant.style.top  = antY + 'px';
+
+        requestAnimationFrame(antFrame);
+      }
+      requestAnimationFrame(antFrame);
+
+      if (homeBtn) {
+        homeBtn.addEventListener('click', () => {
+          antFollowing = !antFollowing;
+          homeBtn.classList.toggle('active', !antFollowing);
+          homeBtn.title = antFollowing ? 'Send ant home' : 'Ant is home — click to let it roam';
+        });
+      }
+    }
   </script>
 </body>
 </html>
