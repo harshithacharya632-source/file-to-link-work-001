@@ -1012,9 +1012,18 @@
     // ── SHARE ──
     function shareButton() {
       if (navigator.share) {
-        navigator.share({ title: fileName, url: window.location.href }).catch(() => {});
+        navigator.share({ title: fileName, url: window.location.href }).catch((err) => {
+          if (err && err.name === 'AbortError') return; // user cancelled — no toast needed
+          // navigator.share exists but failed anyway (common in in-app
+          // WebViews where the API is present but non-functional) —
+          // fall back to copying the link so the button always does
+          // something visible instead of silently doing nothing.
+          copyToClipboard(window.location.href)
+            .then(() => showToast("Link copied!"))
+            .catch(() => showToast("Couldn't share — copy the link from the address bar"));
+        });
       } else {
-        navigator.clipboard.writeText(window.location.href)
+        copyToClipboard(window.location.href)
           .then(() => showToast("Link copied!"))
           .catch(() => showToast("Copy URL from address bar"));
       }
@@ -1114,14 +1123,38 @@
       document.body.style.overflow = 'hidden';
       lockLandscape();
       updateFsExitVisibility();
+      // Push a history entry so the phone's back button/gesture closes
+      // pseudo-fullscreen instead of leaving the player stuck stretched
+      // over the page (it was never real fullscreen, so the browser has
+      // no built-in way to know "back" should undo it — without this,
+      // pressing back either did nothing visible or left the overlap).
+      history.pushState({ pseudoFs: true }, '');
     }
 
     function exitPseudoFullscreen() {
+      // If we're still on the history entry pushed when entering, go back
+      // to consume it — this keeps a later real "back" press from landing
+      // on a stale pseudo-fs state and reopening the overlap. doExit()
+      // itself runs from the popstate handler below either way.
+      if (history.state && history.state.pseudoFs) {
+        history.back();
+      } else {
+        doExitPseudoFullscreen();
+      }
+    }
+
+    function doExitPseudoFullscreen() {
       document.querySelector('.player-section').classList.remove('pseudo-fs');
       document.body.style.overflow = '';
       unlockOrientation();
       updateFsExitVisibility();
     }
+
+    window.addEventListener('popstate', () => {
+      if (document.querySelector('.player-section').classList.contains('pseudo-fs')) {
+        doExitPseudoFullscreen();
+      }
+    });
 
     function updateFsExitVisibility() {
       const btn = document.getElementById('pseudo-fs-exit');
