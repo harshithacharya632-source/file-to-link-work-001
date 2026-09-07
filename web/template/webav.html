@@ -392,7 +392,7 @@
       width: 13px; height: 13px; border-radius: 50%; border: none;
       background: var(--red); cursor: pointer;
     }
-    .seek-bar::-moz-range-progress { background: var(--red); height: 4px; border-radius: 4px; }
+    .seek-bar::-moz-range-progress { background: #fff; height: 4px; border-radius: 4px; }
 
     .controls-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
     .ctrl-btn {
@@ -417,6 +417,7 @@
       width: 10px; height: 10px; border-radius: 50%; background: #fff; cursor: pointer;
     }
     .vol-slider::-moz-range-thumb { width: 10px; height: 10px; border-radius: 50%; border: none; background: #fff; cursor: pointer; }
+    .vol-slider::-moz-range-progress { background: #fff; height: 3px; border-radius: 3px; }
 
     .ctrl-btn .fbk, .center-play-btn .fbk {
       display: none; font-size: 9px; font-weight: 700; color: #fff; letter-spacing: .3px;
@@ -1042,6 +1043,7 @@
     const wrap    = document.getElementById('playerWrap');
     const fileUrl  = "{{file_url}}";
     const fileName = "{{file_name}}";
+    const fileSize = "{{file_size}}";
 
     // ── DEVICE DETECTION ──
     const isIOSDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -1090,9 +1092,13 @@
     }
 
     // ── EXTERNAL PLAYER LAUNCHER ──
-    function openExternalPlayer(pkg, appLabel) {
+    // extraFields lets callers pass Android intent extras (e.g. resume
+    // position) using the standard intent:// URI type prefixes:
+    // "i." = int, "l." = long, "S." = string, "b." = boolean.
+    function openExternalPlayer(pkg, appLabel, extraFields) {
       const path = fileUrl.replace(/^https?:\/\//, '');
-      const intentUrl = `intent://${path}#Intent;package=${pkg};type=video/*;scheme=https;end`;
+      const extras = extraFields ? extraFields.map(f => f + ';').join('') : '';
+      const intentUrl = `intent://${path}#Intent;package=${pkg};type=video/*;scheme=https;${extras}end`;
       let opened = false;
       function onVis() { if (document.hidden) opened = true; }
       document.addEventListener('visibilitychange', onVis);
@@ -1116,15 +1122,26 @@
         });
         return;
       }
-      openExternalPlayer('com.mxtech.videoplayer.ad', 'MX Player');
+      // MX Player's documented "position" extra (ms) resumes playback at
+      // that point instead of starting over, so it lands wherever the
+      // web player left off.
+      const positionMs = Math.floor((video.currentTime || 0) * 1000);
+      const extras = positionMs > 0 ? [`i.position=${positionMs}`] : [];
+      openExternalPlayer('com.mxtech.videoplayer.ad', 'MX Player', extras);
     }
 
     function vlc_player() {
+      const positionMs = Math.floor((video.currentTime || 0) * 1000);
       if (isIOSDevice) {
+        // vlc-x-callback doesn't have a documented start-position param,
+        // so iOS VLC will start from the beginning.
         window.location.href = 'vlc-x-callback://x-callback-url/stream?url=' + encodeURIComponent(fileUrl);
         return;
       }
-      openExternalPlayer('org.videolan.vlc', 'VLC');
+      // VLC for Android's documented "position" extra (long, ms), plus
+      // "from_start=false" so it doesn't ignore the position and restart.
+      const extras = positionMs > 0 ? [`l.position=${positionMs}`, `b.from_start=false`] : [];
+      openExternalPlayer('org.videolan.vlc', 'VLC', extras);
     }
 
     function playit_player() {
@@ -1183,7 +1200,13 @@
     const watchProgressEl    = document.getElementById('watch-progress');
     const watchProgressPctEl = document.getElementById('watch-progress-pct');
     let lastShownPct = -1;
-    const RESUME_KEY = 'gfx_resume_' + btoa(unescape(encodeURIComponent(fileUrl))).slice(0, 40);
+    // Keyed on the file name (+ size) rather than the full fileUrl, because
+    // the URL this page is served with can contain a per-session/signed
+    // token that changes between visits even for the exact same file —
+    // if the key included that token, "resume" would silently reset to 0
+    // every time the file was reopened, which is the bug this fixes.
+    const RESUME_ID = (fileName || '') + '|' + (fileSize || '');
+    const RESUME_KEY = 'gfx_resume_' + btoa(unescape(encodeURIComponent(RESUME_ID))).slice(0, 40);
     let resumeApplied = false;
     let lastSaveTime = 0;
 
@@ -1299,31 +1322,56 @@
     video.addEventListener('canplay', () => setBuffering(false));
 
     let seeking = false;
+
+    // Paints the "already watched" portion of the seek bar as a solid
+    // white fill (Chrome/Safari webviews don't support a track-fill
+    // pseudo-element the way Firefox does, so it's done with a
+    // background gradient driven from the current value).
+    function paintSeekFill() {
+      const pct = Math.max(0, Math.min(100, parseFloat(seekBar.value) || 0));
+      seekBar.style.background =
+        `linear-gradient(to right, #fff 0%, #fff ${pct}%, rgba(255,255,255,0.28) ${pct}%, rgba(255,255,255,0.28) 100%)`;
+    }
+
     function updateSeekUI() {
       if (seeking || !video.duration || isNaN(video.duration)) return;
       seekBar.value = (video.currentTime / video.duration) * 100;
       timeLabel.textContent = formatTime(video.currentTime) + ' / ' + formatTime(video.duration);
+      paintSeekFill();
     }
     seekBar.addEventListener('input', () => {
       seeking = true;
       if (video.duration) {
         timeLabel.textContent = formatTime((seekBar.value / 100) * video.duration) + ' / ' + formatTime(video.duration);
       }
+      paintSeekFill();
     });
     seekBar.addEventListener('change', () => {
       if (video.duration) video.currentTime = (seekBar.value / 100) * video.duration;
       seeking = false;
+      paintSeekFill();
     });
+    paintSeekFill();
 
     playPauseBtn.addEventListener('click', togglePlay);
 
     // Volume
     let lastVolBeforeMute = 1;
+
+    // Same solid-white fill treatment as the seek bar, sized to the
+    // current volume level (0–1).
+    function paintVolFill(v) {
+      const pct = Math.max(0, Math.min(100, v * 100));
+      volSlider.style.background =
+        `linear-gradient(to right, #fff 0%, #fff ${pct}%, rgba(255,255,255,0.3) ${pct}%, rgba(255,255,255,0.3) 100%)`;
+    }
+
     function setVolume(v) {
       v = Math.max(0, Math.min(1, v));
       video.volume = v;
       video.muted = v === 0;
       volSlider.value = v;
+      paintVolFill(v);
       const icon = v === 0 ? 'fa-volume-xmark' : (v < 0.5 ? 'fa-volume-low' : 'fa-volume-high');
       volBtn.innerHTML = `<i class="fa-solid ${icon}"></i><span class="fbk">${v === 0 ? 'Mute' : 'Vol'}</span>`;
       volIndIcon.className = 'fa-solid ' + icon;
