@@ -1140,7 +1140,7 @@
       }
       // VLC for Android's documented "position" extra (long, ms), plus
       // "from_start=false" so it doesn't ignore the position and restart.
-      const extras = positionMs > 0 ? [`l.position=${positionMs}`, `b.from_start=false`] : [];
+      const extras = positionMs > 0 ? [`l.position=${positionMs}`, `B.from_start=false`] : [];
       openExternalPlayer('org.videolan.vlc', 'VLC', extras);
     }
 
