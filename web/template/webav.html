@@ -1392,6 +1392,56 @@
     document.addEventListener('fullscreenchange', recheckBufferingAfterFsChange);
     document.addEventListener('webkitfullscreenchange', recheckBufferingAfterFsChange);
 
+    // ── Frozen-frame watchdog ──────────────────────────────────────
+    // On some mobile browsers/WebViews, toggling *real* fullscreen can
+    // leave the decoder stalled — video.paused is false, readyState and
+    // video.buffered both look fine (data IS there), but currentTime
+    // simply stops advancing and the frame is frozen. Because the data
+    // is buffered, the 'waiting' event doesn't fire and our buffer-ahead
+    // check above correctly stays quiet — so nothing shows a spinner,
+    // but nothing is playing either. This watchdog polls currentTime
+    // directly (independent of waiting/playing events) and, if it's
+    // truly stuck for over a second while we still have data to play,
+    // nudges the decoder back to life with a tiny backward seek + replay
+    // — the standard fix for this exact class of stall.
+    let wdLastTime = -1;
+    let wdLastProgressAt = performance.now();
+    let wdNudgeInFlight = false;
+
+    setInterval(() => {
+      if (video.paused || video.ended || video.seeking) {
+        wdLastTime = video.currentTime;
+        wdLastProgressAt = performance.now();
+        return;
+      }
+
+      const now = performance.now();
+      if (video.currentTime !== wdLastTime) {
+        wdLastTime = video.currentTime;
+        wdLastProgressAt = now;
+        return;
+      }
+
+      if (now - wdLastProgressAt < 1200 || wdNudgeInFlight) return;
+
+      if (hasBufferAhead(0.3)) {
+        // Data is ready but the frame is frozen — nudge the decoder.
+        wdNudgeInFlight = true;
+        clearWaitingTimer();
+        setBuffering(false);
+        const t = video.currentTime;
+        try {
+          video.currentTime = Math.max(0, t - 0.05);
+          video.play().catch(() => {});
+        } catch (e) {}
+        wdLastProgressAt = now;
+        setTimeout(() => { wdNudgeInFlight = false; }, 700);
+      } else {
+        // No data ahead either — this is a real stall, show the spinner.
+        setBuffering(true);
+      }
+    }, 500);
+
     let seeking = false;
 
     // Paints the "already watched" portion of the seek bar as a solid
