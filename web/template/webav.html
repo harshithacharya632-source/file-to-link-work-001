@@ -1338,9 +1338,32 @@
     function clearWaitingTimer() {
       if (waitingTimer) { clearTimeout(waitingTimer); waitingTimer = null; }
     }
+
+    // True network starvation means there's no buffered data ahead of
+    // where playback currently is. A brief decode/compositing hiccup
+    // (common right after the video suddenly renders at full-screen
+    // size on weaker phones) still fires 'waiting', but there IS data
+    // sitting ready in video.buffered — so it isn't a real stall, and
+    // showing the spinner for it is what was causing it to flash in the
+    // middle of the screen mid-playback in fullscreen while the video
+    // kept playing fine behind it.
+    function hasBufferAhead(minSeconds) {
+      try {
+        const b = video.buffered;
+        for (let i = 0; i < b.length; i++) {
+          if (video.currentTime >= b.start(i) && video.currentTime <= b.end(i)) {
+            return (b.end(i) - video.currentTime) >= minSeconds;
+          }
+        }
+      } catch (e) {}
+      return false;
+    }
+
     video.addEventListener('waiting', () => {
       clearWaitingTimer();
-      waitingTimer = setTimeout(() => setBuffering(true), 250);
+      waitingTimer = setTimeout(() => {
+        if (!hasBufferAhead(1)) setBuffering(true);
+      }, 250);
     });
     video.addEventListener('playing', () => { clearWaitingTimer(); setBuffering(false); });
     video.addEventListener('canplay', () => { clearWaitingTimer(); setBuffering(false); });
