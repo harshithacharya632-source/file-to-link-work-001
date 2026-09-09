@@ -1047,6 +1047,7 @@
 
     // ── DEVICE DETECTION ──
     const isIOSDevice = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isMobileDevice = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
 
     function copyToClipboard(text) {
       if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1429,11 +1430,23 @@
         wdNudgeInFlight = true;
         clearWaitingTimer();
         setBuffering(false);
-        const t = video.currentTime;
-        try {
-          video.currentTime = Math.max(0, t - 0.05);
+        if (isMobileDevice) {
+          // The mobile freeze is a decoder/surface hiccup with data
+          // already sitting in the buffer, so a tiny backward seek
+          // reliably kicks it back to life.
+          const t = video.currentTime;
+          try {
+            video.currentTime = Math.max(0, t - 0.05);
+            video.play().catch(() => {});
+          } catch (e) {}
+        } else {
+          // On desktop, seeking (even a few ms backward) can trigger a
+          // brand-new network Range request instead of just resuming
+          // decode — which was turning a brief hiccup into a real
+          // multi-second stall. Desktop browsers don't have the same
+          // frozen-decoder quirk, so just nudge playback without seeking.
           video.play().catch(() => {});
-        } catch (e) {}
+        }
         wdLastProgressAt = now;
         setTimeout(() => { wdNudgeInFlight = false; }, 700);
       } else {
