@@ -1319,6 +1319,30 @@
     video.addEventListener('play', () => { updatePlayIcon(); scheduleAutoHide(); });
     video.addEventListener('pause', () => { updatePlayIcon(); showControls(); });
 
+    // ── Temporary diagnostics ────────────────────────────────────────
+    // The laptop-only "plays ~5s in fullscreen then hard-stops, no
+    // spinner" symptom doesn't match anything the debounce/watchdog
+    // logic above should be doing, and guessing at more fixes blind
+    // risks another regression like the seek-nudge did on desktop last
+    // time. This logs every state-changing video event with a
+    // timestamp and current playback position, so reproducing the
+    // freeze and copying the console output (F12 → Console tab) will
+    // show exactly what the browser did right before it stopped —
+    // e.g. an 'error' event with a code, a 'pause' with no prior click,
+    // or a 'stalled'/'suspend' with nothing after it. Safe to remove
+    // once the cause is found.
+    ['stalled', 'suspend', 'abort', 'emptied', 'ended', 'error'].forEach(evt => {
+      video.addEventListener(evt, () => {
+        console.debug(`[player-diag] ${evt} @ t=${video.currentTime.toFixed(2)}s readyState=${video.readyState} networkState=${video.networkState}`, video.error || '');
+      });
+    });
+    video.addEventListener('pause', () => {
+      console.debug(`[player-diag] pause @ t=${video.currentTime.toFixed(2)}s (fullscreen=${isRealFullscreenActive()})`);
+    });
+    video.addEventListener('waiting', () => {
+      console.debug(`[player-diag] waiting @ t=${video.currentTime.toFixed(2)}s`);
+    });
+
     // ── Buffering spinner ──────────────────────────────────────────
     // On some mobile browsers, entering/leaving *real* fullscreen (as
     // opposed to the pseudo-fullscreen fallback) fires a 'waiting' event
