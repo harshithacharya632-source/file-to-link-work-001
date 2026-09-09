@@ -183,39 +183,18 @@ class ByteStreamer:
         current_part = 1
         location = await self.get_location(file_id)
 
-        async def fetch_chunk(off: int):
-            return await media_session.send(
+        try:
+            r = await media_session.send(
                 raw.functions.upload.GetFile(
-                    location=location, offset=off, limit=chunk_size
+                    location=location, offset=offset, limit=chunk_size
                 ),
             )
-
-        try:
-            r = await fetch_chunk(offset)
             if isinstance(r, raw.types.upload.File):
                 while True:
                     chunk = r.bytes
                     if not chunk:
                         break
-
-                    # Kick off the request for the *next* chunk right away,
-                    # before we yield the current one. Sending it to the
-                    # client (the `yield`, which awaits a socket write) then
-                    # overlaps with Telegram already preparing the next
-                    # chunk, instead of the two happening one after another.
-                    # This is what was causing mid-playback stalls: every
-                    # chunk boundary used to be a fully serial
-                    # fetch -> send -> fetch -> send with no overlap, so any
-                    # latency to Telegram's servers showed up as a visible
-                    # buffering pause in the player.
-                    next_part = current_part + 1
-                    next_offset = offset + chunk_size
-                    next_task = (
-                        asyncio.create_task(fetch_chunk(next_offset))
-                        if next_part <= part_count else None
-                    )
-
-                    if part_count == 1:
+                    elif part_count == 1:
                         yield chunk[first_part_cut:last_part_cut]
                     elif current_part == 1:
                         yield chunk[first_part_cut:]
@@ -224,12 +203,17 @@ class ByteStreamer:
                     else:
                         yield chunk
 
-                    current_part = next_part
-                    offset = next_offset
+                    current_part += 1
+                    offset += chunk_size
 
-                    if next_task is None:
+                    if current_part > part_count:
                         break
-                    r = await next_task
+
+                    r = await media_session.send(
+                        raw.functions.upload.GetFile(
+                            location=location, offset=offset, limit=chunk_size
+                        ),
+                    )
         except (TimeoutError, AttributeError):
             pass
         finally:
