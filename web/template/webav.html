@@ -1317,9 +1317,57 @@
     }
     video.addEventListener('play', () => { updatePlayIcon(); scheduleAutoHide(); });
     video.addEventListener('pause', () => { updatePlayIcon(); showControls(); });
-    video.addEventListener('waiting', () => setBuffering(true));
-    video.addEventListener('playing', () => setBuffering(false));
-    video.addEventListener('canplay', () => setBuffering(false));
+
+    // ── Buffering spinner ──────────────────────────────────────────
+    // On some mobile browsers, entering/leaving *real* fullscreen (as
+    // opposed to the pseudo-fullscreen fallback) fires a 'waiting' event
+    // during the resize/relayout even though the video was never actually
+    // starved for data — and on those same browsers the follow-up
+    // 'playing'/'canplay' event that's supposed to clear it doesn't
+    // always fire. That left the spinner covering the whole screen
+    // forever after tapping the fullscreen button, even though the video
+    // kept playing underneath it (this is the "fullscreen = stuck
+    // loading, exit fullscreen = plays fine" bug).
+    //
+    // Fix is two-part: (1) debounce 'waiting' briefly so a transient
+    // stall during a fullscreen transition doesn't even show the
+    // spinner, and (2) treat currentTime actually advancing as
+    // authoritative proof the video is playing, clearing the spinner
+    // regardless of which buffering events did or didn't fire.
+    let waitingTimer = null;
+    function clearWaitingTimer() {
+      if (waitingTimer) { clearTimeout(waitingTimer); waitingTimer = null; }
+    }
+    video.addEventListener('waiting', () => {
+      clearWaitingTimer();
+      waitingTimer = setTimeout(() => setBuffering(true), 250);
+    });
+    video.addEventListener('playing', () => { clearWaitingTimer(); setBuffering(false); });
+    video.addEventListener('canplay', () => { clearWaitingTimer(); setBuffering(false); });
+
+    let lastBufCheckTime = -1;
+    video.addEventListener('timeupdate', () => {
+      if (!video.paused && video.currentTime !== lastBufCheckTime) {
+        clearWaitingTimer();
+        setBuffering(false);
+      }
+      lastBufCheckTime = video.currentTime;
+    });
+
+    // Belt-and-suspenders re-check right after a real-fullscreen
+    // transition finishes, since that's specifically when this got
+    // stuck — if the video is actually playing with enough buffered
+    // data, force the spinner off no matter what.
+    function recheckBufferingAfterFsChange() {
+      setTimeout(() => {
+        if (!video.paused && video.readyState >= 3) {
+          clearWaitingTimer();
+          setBuffering(false);
+        }
+      }, 400);
+    }
+    document.addEventListener('fullscreenchange', recheckBufferingAfterFsChange);
+    document.addEventListener('webkitfullscreenchange', recheckBufferingAfterFsChange);
 
     let seeking = false;
 
