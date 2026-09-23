@@ -1467,8 +1467,14 @@
           // On desktop, seeking (even a few ms backward) can trigger a
           // brand-new network Range request instead of just resuming
           // decode — which was turning a brief hiccup into a real
-          // multi-second stall. Desktop browsers don't have the same
-          // frozen-decoder quirk, so just nudge playback without seeking.
+          // multi-second stall. But calling video.play() while
+          // video.paused is already false is a documented no-op — it
+          // resolves immediately and does nothing, so it never actually
+          // kicked a frozen decoder back to life. Force a real play-state
+          // transition instead (pause then play) so the browser actually
+          // resumes decoding from the current buffered position, without
+          // touching the network via a seek.
+          video.pause();
           video.play().catch(() => {});
         }
         wdLastProgressAt = now;
@@ -1769,7 +1775,25 @@
       btn.style.display = wrap.classList.contains('pseudo-fs') ? 'flex' : 'none';
     }
 
+    // Chromium/desktop-specific quirk: requesting fullscreen on the
+    // *wrapper* div (not the <video> itself) can make the browser
+    // silently pause the video during the fullscreen transition — the
+    // fullscreenchange event still fires normally, isRealFullscreenActive()
+    // returns true, readyState/buffered look fine, but video.paused is
+    // now true and nothing ever calls play() again. Because our
+    // buffering-spinner logic only clears on 'playing'/'canplay'/advancing
+    // currentTime, a video stuck in this state shows the loading spinner
+    // forever — exactly the "click fullscreen -> stuck loading, never
+    // plays" symptom reported on laptops (mobile doesn't hit this because
+    // iOS uses video.webkitEnterFullscreen() directly and other mobile
+    // browsers fall back to the CSS pseudo-fullscreen path instead of the
+    // real Fullscreen API). Fix: remember whether we were playing right
+    // before the toggle, and if fullscreen finished but playback didn't
+    // resume on its own, resume it ourselves.
+    let wasPlayingBeforeFsToggle = false;
+
     function toggleFullscreen() {
+      wasPlayingBeforeFsToggle = !video.paused;
       if (wrap.classList.contains('pseudo-fs')) { exitPseudoFullscreen(); return; }
       if (isRealFullscreenActive()) { exitRealFullscreen(); return; }
       const attempted = enterRealFullscreen();
@@ -1786,11 +1810,30 @@
         ? '<i class="fa-solid fa-compress"></i><span class="fbk">Exit</span>'
         : '<i class="fa-solid fa-expand"></i><span class="fbk">Full</span>';
     }
+
+    // Belt-and-suspenders: re-check shortly after the transition too, in
+    // case the browser pauses the video a beat after fullscreenchange
+    // fires rather than before it.
+    function resumeIfFsSwallowedPlayback() {
+      if (isRealFullscreenActive() && wasPlayingBeforeFsToggle && video.paused) {
+        video.play().catch(() => {});
+        clearWaitingTimer();
+        setBuffering(false);
+      }
+    }
     document.addEventListener('fullscreenchange', () => {
       updateFsIcon();
-      if (!isRealFullscreenActive()) unlockOrientation();
+      if (!isRealFullscreenActive()) { unlockOrientation(); return; }
+      resumeIfFsSwallowedPlayback();
+      setTimeout(resumeIfFsSwallowedPlayback, 300);
     });
-    document.addEventListener('webkitfullscreenchange', updateFsIcon);
+    document.addEventListener('webkitfullscreenchange', () => {
+      updateFsIcon();
+      if (isRealFullscreenActive()) {
+        resumeIfFsSwallowedPlayback();
+        setTimeout(resumeIfFsSwallowedPlayback, 300);
+      }
+    });
 
     // Some mobile WebViews (notably Telegram's in-app browser) don't
     // recompute 100vh correctly right after a rotation, which is why
