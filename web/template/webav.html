@@ -1309,8 +1309,86 @@
     }
 
     function togglePlay() {
+      userInitiatedPauseOrPlay = true;
       if (video.paused) video.play().catch(() => {}); else video.pause();
     }
+
+    // ── Screen Wake Lock: stop laptops from throttling/suspending video
+    // decode in exclusive fullscreen ────────────────────────────────────
+    // Root cause of the "smooth with another window open, freezes when
+    // the video is the only thing on screen in fullscreen" symptom: this
+    // is a well-known Windows/Chromium laptop bug where the OS misreports
+    // an exclusive fullscreen window as "occluded"/idle (because nothing
+    // else is on the desktop for it to compare against) and the browser
+    // throttles or suspends video decoding to save power as a result.
+    // readyState=4 / networkState=1 in the diagnostics confirm the data
+    // was already fully buffered when this happened — so it was never a
+    // network/server problem. A Screen Wake Lock tells the OS the page is
+    // actively doing something that needs full power, which is the
+    // standard mitigation recommended for exactly this class of bug.
+    let wakeLock = null;
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator && !wakeLock) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          wakeLock.addEventListener('release', () => { wakeLock = null; });
+        }
+      } catch (e) { /* not supported / permission denied — ignore */ }
+    }
+    function releaseWakeLock() {
+      if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+    }
+    video.addEventListener('play', requestWakeLock);
+    video.addEventListener('pause', releaseWakeLock);
+    // Wake locks are auto-released whenever the page becomes hidden, and
+    // must be re-requested once it's visible again and still playing.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && !video.paused) requestWakeLock();
+    });
+
+    // ── Tell a real user pause apart from the browser silently killing
+    // playback, and recover from the latter instead of freezing forever ──
+    let userInitiatedPauseOrPlay = false;
+    let autoResumeAttempts = 0;
+    let autoResumeWindowStart = 0;
+    video.addEventListener('pause', () => {
+      const wasUserAction = userInitiatedPauseOrPlay;
+      userInitiatedPauseOrPlay = false;
+      if (wasUserAction || video.ended || !isRealFullscreenActive()) return;
+      // The browser paused playback on its own while we were fullscreen
+      // and the video wasn't finished — almost certainly the OS-throttling
+      // bug above. Try to resume automatically, but cap the retries so a
+      // genuinely broken stream doesn't spin silently forever; after that,
+      // surface a manual "Tap to resume" control instead.
+      const now = Date.now();
+      if (now - autoResumeWindowStart > 4000) { autoResumeWindowStart = now; autoResumeAttempts = 0; }
+      autoResumeAttempts++;
+      if (autoResumeAttempts <= 6) {
+        video.play().catch(() => {});
+      } else {
+        showResumeOverlay();
+      }
+    });
+    function showResumeOverlay() {
+      if (document.getElementById('gfxResumeOverlay')) return;
+      const ov = document.createElement('button');
+      ov.id = 'gfxResumeOverlay';
+      ov.setAttribute('aria-label', 'Resume playback');
+      ov.style.cssText = 'position:absolute;inset:0;margin:auto;width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:2px solid #fff;font-size:22px;cursor:pointer;z-index:50;';
+      ov.innerHTML = '<i class="fa-solid fa-play"></i>';
+      ov.addEventListener('click', () => {
+        ov.remove();
+        autoResumeAttempts = 0;
+        userInitiatedPauseOrPlay = true;
+        video.play().catch(() => {});
+      });
+      wrap.appendChild(ov);
+    }
+    video.addEventListener('playing', () => {
+      autoResumeAttempts = 0;
+      const ov = document.getElementById('gfxResumeOverlay');
+      if (ov) ov.remove();
+    });
 
     function setBuffering(on) {
       bufSpinner.classList.toggle('show', on);
